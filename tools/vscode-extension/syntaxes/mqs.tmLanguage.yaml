@@ -1,0 +1,244 @@
+---
+name: MQS
+scopeName: source.mqs
+fileTypes: [mqs]
+
+firstLineMatch: ^#!/.*\bmqs\b
+
+variables:
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+
+  # numbers
+  decimal: '\b[0-9]+(?:\.[0-9]*)?\b'
+  binary: '\b0b[0-1]+\b'
+  octal: '\b0c[0-7]+\b'
+  hexadecimal: '\b0x[0-9a-fA-F]+\b'
+  number: '{{decimal}}|{{binary}}|{{octal}}|{{hexadecimal}}'
+
+  type: nat|int|flt
+
+  ann-pattern: (?:\s*(:)\s*(?:({{type}})|(\S*)))?
+  decl-pattern: \s*(?:({{ident}})|(\S*))\s*
+  begindef-scope: keyword.definition.mqs
+
+patterns:
+- include: '#comment'
+- include: '#namespace'
+- include: '#declaration'
+- include: '#expression'
+- include: '#invalid'
+
+repository:
+
+  params:
+    begin: \(
+    beginCaptures: { '0': { name: punctuation.section.parameters.begin.mqs } }
+
+    contentName: meta.parameters.mqs
+    patterns:
+    - match: '({{ident}}){{ann-pattern}}'
+      captures:
+        '1': { name: variable.parameter.mqs }
+        '2': { name: punctuation.definition.type-annonation.mqs }
+        '3': { name: storage.type.mqs }
+        '4': { name: invalid.illegal.mqs }
+    - match: \,
+      name: punctuation.separator.parameters.mqs
+    - include: '#invalid'
+
+    end: \)
+    endCaptures: { '0': { name: punctuation.section.parameters.end.mqs } }
+
+  # TOP LEVEL
+
+  namespace:
+    begin: '({{ident}})\s*(\{)'
+    beginCaptures:
+      '1': { name: entity.name.namespace.mqs }
+      '2': { name: punctuation.section.namespace.begin.mqs }
+
+    patterns:
+      - include: '#comment'
+      - include: '#expression'
+      - include: '#declaration'
+      - include: '#invalid'
+
+    end: \}
+    endCaptures: { '0': { name: punctuation.section.namespace.end.mqs } }
+
+  # DECLARATIONS
+
+  declaration:
+    patterns:
+    - include: '#comment'
+
+    - include: '#import'
+    - include: '#theorem-decl'
+    - include: '#conclusion-decl'
+    - include: '#variable-decl'
+    - include: '#function-decl'
+    - include: '#question-decl'
+
+  import:
+    match: (#)\s*((?:{{ident}}\s*\/\s*)*(?:{{ident}}))
+    captures:
+      '1': { name: keyword.control.import.mqs }
+      '2': { name: entity.name.namespace.mqs }
+
+  theorem-decl:
+    begin: (!){{decl-pattern}}
+    beginCaptures:
+      '1': { name: keyword.declaration.theorem.mqs }
+      '2': { name: entity.name.function.theorem.mqs }
+      '3': { name: invalid.illegal.mqs }
+
+    patterns:
+    - include: '#params'
+    - include: '#invalid'
+
+    end: :=
+    endCaptures: { '0': { name: keyword.definition.theorem.mqs } }
+
+  conclusion-decl:
+    begin: (&){{decl-pattern}}
+    beginCaptures:
+      '1': { name: keyword.declaration.conclusion.mqs }
+      '2': { name: entity.name.function.conclusion.mqs }
+      '3': { name: invalid.illegal.mqs }
+
+    patterns:
+    - include: '#params'
+    - include: '#invalid'
+
+    end: (?:(t|f)|(\S*))\s*(:=)
+    endCaptures:
+      '1': { name: constant.language.bool.mqs }
+      '2': { name: invalid.illegal.mqs }
+      '3': { name: keyword.definition.conclusion.mqs }
+
+  variable-decl:
+    match: (\$){{decl-pattern}}(:=)
+    captures:
+      '1': { name: keyword.declaration.variable.mqs }
+      '2': { name: entity.name.function.variable.mqs }
+      '3': { name: invalid.illegal.mqs }
+      '4': { name: keyword.definition.variable.mqs }
+
+  function-decl:
+    begin: (@){{decl-pattern}}
+    beginCaptures:
+      '1': { name: keyword.declaration.function.mqs }
+      '2': { name: entity.name.function.function.mqs }
+      '3': { name: invalid.illegal.mqs }
+
+    patterns:
+    - include: '#params'
+    - include: '#invalid'
+
+    end: '{{ann-pattern}}\s*(\:=)'
+    endCaptures:
+      '1': { name: punctuation.definition.type-annonation.mqs }
+      '2': { name: storage.type.mqs }
+      '3': { name: invalid.illegal.mqs }
+      '4': { name: keyword.definition.function.mqs }
+
+  question-decl:
+    begin: (\?)\s*(?:({{ident}})\s*)?
+    beginCaptures:
+      '1': { name: keyword.declaration.question.mqs }
+      '2': { name: entity.name.function.question.mqs }
+
+    patterns:
+    - include: '#params'
+    - include: '#invalid'
+
+    end: :=
+    endCaptures: { '0': { name: keyword.definition.question.mqs } }
+
+  # EXPRESSION
+
+  expression:
+    patterns:
+    - include: '#comment'
+
+    - include: '#operator'
+    - include: '#variable'
+    - include: '#number'
+    - include: '#variadic'
+
+  operator:
+    patterns:
+    # misc
+    - match: :=
+      name: keyword.definition.mqs
+
+    # question
+    - match: <=>
+      name: support.function.match.mqs
+    - match: </=>
+      name: support.function.not-match.mqs
+    - match: \%
+      name: support.function.divisible.mqs
+
+    # normal
+    - match: \=|/=
+      name: keyword.operator.comparison.mqs
+    - match: <=|>=|<>|<|>
+      name: keyword.operator.relational.mqs
+    - match: \*|/|-|\+|\^
+      name: keyword.operator.arithmetic.mqs
+    - begin: \(
+      beginCaptures: { '0': { name: punctuation.section.group.begin.mqs } }
+      
+      patterns: 
+      - include: '#expression'
+      - include: '#invalid'
+
+      end: \)
+      endCaptures: { '0': { name: punctuation.section.group.end.mqs } }
+
+  variable:
+    patterns:
+    - begin: ({{ident}})\s*(\()
+      beginCaptures:
+        '1': { name: entity.name.function.mqs }
+        '2': { name: punctuation.parentheses.arguments.start.mqs }
+
+      patterns:
+      - include: '#comment'
+      - match: \,
+        name: punctuation.sequence.arguments.mqs
+      - include: '#expression'
+      - include: '#invalid'
+
+      end: '\)'
+      endCaptures:
+        '0': { name: punctuation.parentheses.arguments.start.mqs }
+
+    - match: '{{ident}}'
+      scope: variable.mqs
+
+  number:
+    match: \b{{number}}\b
+    name: constant.numeric.mqs
+
+  variadic:
+    match: \.\.(?:{{number}})?
+    name: support.variadic.mqs
+
+  # MISC
+
+  comment:
+    patterns:
+    - name: comment.block.mqs
+      begin: '--\*'
+      end: '\*--'
+
+    - name: comment.line.mqs
+      match: '--.*$'
+
+  invalid:
+    patterns:
+    - match: '\s+'
+    - name: invalid.illegal.mqs
+      match: '\S'

@@ -1,0 +1,30 @@
+"use strict";
+exports.__esModule = true;
+exports.activate = void 0;
+var vscode = require("vscode");
+var child_process_1 = require("child_process");
+var cmd = require("./features/commands");
+// import { Disposable, languages, Range, TextEditor } from 'vscode';
+// import { MQSResult, setMQSResult } from './features/resultDatabase';
+// import { MQSCodeLensProvider } from "./features/codeLensProvider";
+function activate(context) {
+    if (!vscode.workspace.getConfiguration("mqs").get("enableLanguageFeatures"))
+        return;
+    // set status bar
+    var statusbarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+    var output = "MQS: Version unknown";
+    try {
+        output = (0, child_process_1.execSync)(vscode.workspace.getConfiguration("mqs").get("mqsExecutablePath") + " --version").toString();
+    }
+    catch (error) { }
+    statusbarItem.text = output.replace("mqs ", "MQS: ");
+    statusbarItem.show();
+    // set commands for codelens
+    context.subscriptions.push(vscode.commands.registerCommand("mqs.setResult", cmd.setMQSResultCallback));
+    context.subscriptions.push(vscode.commands.registerCommand("mqs.refreshCodeLens", cmd.refreshCodeLensCallback));
+    context.subscriptions.push(vscode.commands.registerCommand("mqs.renameQuestion", cmd.renameQuestionCallback));
+    // set and subscribe codelens
+    cmd.refreshCodeLensCallback();
+    context.subscriptions.push(cmd.codelensDisposable);
+}
+exports.activate = activate;

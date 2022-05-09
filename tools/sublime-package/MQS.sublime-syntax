@@ -1,0 +1,237 @@
+%YAML 1.2
+
+---
+
+name: MQS
+file_extensions: [mqs]
+fileTypes: [.mqs]
+scope: source.mqs
+
+variables:
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+
+  # numbers
+  decimal: '\b[0-9]+(?:\.[0-9]*)?\b'
+  binary: '\b0b[0-1]+\b'
+  octal: '\b0c[0-7]+\b'
+  hexadecimal: '\b0x[0-9a-fA-F]+\b'
+  number: '{{decimal}}|{{binary}}|{{octal}}|{{hexadecimal}}'
+
+  type: nat|int|flt
+
+  annpattern: (?:\s*(:)\s*(?:({{type}})|(\S*)))?
+  declpattern: \s*(?:({{ident}})|(\S*))\s*
+
+contexts:
+
+  main:
+    - include: comment
+    - include: namespace
+    - include: declaration
+    - include: expression
+    - include: invalid
+
+  params:
+    - match: \(
+      scope: punctuation.section.parameters.begin.mqs
+      push:
+        - match: '({{ident}}){{annpattern}}'
+          captures:
+            1: variable.parameter.mqs
+            2: punctuation.annonation.mqs
+            3: storage.type.mqs
+            4: invalid.illegal.mqs
+        - match: \,
+          scope: punctuation.separator.parameters.mqs
+        - match: \)
+          scope: punctuation.section.parameters.end.mqs
+          pop: true
+        - include: invalid
+
+  # TOP LEVEL
+
+  namespace:
+    - match: '({{ident}})\s*(\{)'
+      captures:
+        1: entity.name.namespace.mqs
+        2: punctuation.section.namespace.begin.mqs
+      push:
+        - include: comment
+        - match: \}
+          scope: punctuation.section.namespace.end.mqs
+          pop: true
+        - include: expression
+        - include: declaration
+        - include: invalid
+
+ # DECLARATIONS
+
+  declaration:
+    - include: comment
+
+    - include: import
+    - include: theorem-decl
+    - include: conclusion-decl
+    - include: variable-decl
+    - include: function-decl
+    - include: question-decl
+
+  import:
+    - match: (#)\s*((?:{{ident}}\s*\/\s*)*(?:{{ident}}))
+      captures:
+        1: keyword.control.import.mqs
+        2: entity.name.namespace.mqs
+
+  theorem-decl:
+    - match: (!){{declpattern}}
+      captures:
+        1: keyword.declaration.theorem.mqs
+        2: entity.name.function.theorem.mqs
+        3: invalid.illegal.mqs
+      push:
+        - match: :=
+          scope: keyword.definition.theorem.mqs
+          pop: true
+        - include: params
+        - include: invalid
+
+  conclusion-decl:
+    - match: (&){{declpattern}}
+      captures:
+        1: keyword.declaration.conclusion.mqs
+        2: entity.name.function.conclusion.mqs
+        3: invalid.illegal.mqs
+      push:
+        - match: (?:(t|f)|(\S*))\s*(:=)
+          captures:
+            1: constant.language.bool.mqs
+            2: invalid.illegal.mqs
+            3: keyword.definition.conclusion.mqs
+          pop: true
+        - include: params
+        - include: invalid
+
+
+  variable-decl:
+    - match: (\$){{declpattern}}(:=)
+      captures:
+        1: keyword.declaration.variable.mqs
+        2: entity.name.function.variable.mqs
+        3: invalid.illegal.mqs
+        4: keyword.definition.variable.mqs
+
+  function-decl:
+    - match: (@){{declpattern}}
+      captures:
+        1: keyword.declaration.function.mqs
+        2: entity.name.function.function.mqs
+        3: invalid.illegal.mqs
+      push:
+      - match: '{{annpattern}}\s*(\:=)'
+        captures:
+          1: punctuation.annonation.mqs
+          2: storage.type.mqs
+          3: invalid.illegal.mqs
+          4: keyword.definition.function.mqs
+        pop: true
+      - include: params
+      - include: invalid
+
+  question-decl:
+    - match: (\?)\s*(?:({{ident}})\s*)?
+      captures:
+        1: keyword.declaration.question.mqs
+        2: entity.name.function.question.mqs
+      push:
+        - match: :=
+          scope: keyword.definition.question.mqs
+          pop: true
+        - include: params
+        - include: invalid
+
+  # EXPRESSION
+
+  expression:
+    - include: comment
+
+    - include: operator
+    - include: variable
+    - include: number
+    - include: variadic
+
+  operator:
+    # misc
+    - match: :=
+      scope: keyword.definition.mqs
+
+    # question
+    - match: <=>
+      scope: support.function.match.mqs
+    - match: </=>
+      scope: support.function.not-match.mqs
+    - match: \%
+      scope: support.function.divisible.mqs
+
+    # normal
+    - match: \=|/=
+      scope: keyword.operator.comparison.mqs
+    - match: <=|>=|<>|<|>
+      scope: keyword.operator.relational.mqs
+    - match: \*|/|-|\+|\^
+      scope: keyword.operator.arithmetic.mqs
+    - match: \(
+      scope: punctuation.section.group.begin.mqs
+      push:
+        - match: \)
+          scope: punctuation.section.group.end.mqs
+          pop: true
+        - include: expression
+        - include: invalid
+
+  variable:
+    - match: ({{ident}})\s*(\()
+      captures:
+        1: entity.name.function.mqs
+        2: punctuation.parentheses.arguments.start.mqs
+      push:
+        - include: comment
+        - match: '\)'
+          scope: punctuation.parentheses.arguments.start.mqs
+          pop: true
+        - match: \,
+          scope: punctuation.sequence.arguments.mqs
+        - include: expression
+        - include: invalid
+
+    - match: '{{ident}}'
+      scope: variable.mqs
+
+  number:
+    - match: \b{{number}}\b
+      scope: constant.numeric.mqs
+
+  variadic:
+    - match: \.\.(?:{{number}})?
+      scope: support.variadic.mqs
+
+  # MISC
+
+  comment:
+    - match: '--\*'
+      scope: punctuation.definition.comment.mqs
+      push:
+        - meta_include_prototype: false
+        - meta_scope: comment.block.mqs
+        - match: '\*--'
+          pop: true
+
+    - match: '--'
+      scope: punctuation.definition.comment.mqs
+      push:
+        - meta_scope: comment.line.mqs
+        - match: $\n?
+          pop: true
+
+  invalid:
+    - scope: invalid.illegal.mqs
+      match: '\S'

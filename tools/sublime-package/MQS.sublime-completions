@@ -1,0 +1,8 @@
+{
+	"scope": "source.mqs",
+
+	"completions": [
+		// { "trigger": "some_trigger", "contents": "some_trigger" },
+		
+	]
+}

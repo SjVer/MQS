@@ -1,0 +1,40 @@
+header:
+	"MQS-OBJ-V0.0.1" 0
+	checksum size / CSS (1 byte)
+	checksum (CSS bytes)
+
+info:
+	string index size / STRIS (1 byte)
+	question index size / QIS (1 byte)
+	question count (QIS bytes)
+
+questions:
+	per question: [
+		index (QIS bytes)
+		name / string index (STRIS bytes)
+		theory / string index (STRIS bytes)
+		step index size / SIS (1 byte)
+		step count (SIS bytes)
+
+		per step: [
+			index (SIS bytes)
+			description / string index (STRIS bytes)
+			process / string index (STRIS bytes)
+			state before / string index (STRIS bytes)
+			state after / string index (STRIS bytes)
+		]
+
+		conclusion / string index (STRIS bytes)
+		answer / string index (STRIS bytes)
+		anwser type (1 byte)
+
+		steps tried size / STS (1 byte)
+		steps tried (STS bytes)
+	]
+
+strings:
+	per string: [
+		0
+		index (STRIS bytes)
+		string
+	]

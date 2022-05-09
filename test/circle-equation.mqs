@@ -1,0 +1,59 @@
+#std -- import std
+
+-- theorem
+!unfold := x^2 + ..0 x := (x + ..0 / 2)^2 - (..0 / 2)^2
+
+-- variables
+$old := x^1 + 4 x + y^2 + 6 y = 0
+$new := (x + 2)^2 + (y + 3)^2 = 13
+
+-- question to solve (?0)
+?:= old <=> new
+
+
+
+--* OUTPUT:
+question to solve: ?0
+	theory: `old <=> new`
+	meaning:
+		`old`
+			and
+		`new`
+			can coexist
+	approach:
+		1: substitute $old
+			`old` -> `x^2 + 4 x + y^2 + 6 y = 0`
+		2: substitute $new
+			`new` -> `(x + 2)^2 + (y + 3)^2 = 10`
+		3: rewrite using !unfold
+			`x^2 + 4 x` -> `(x + 4 / 2)^2 - (4 / 2)^2`
+		4: rewrite using !unfold
+			`y^2 + 6 y` -> `(y + 6 / 2)^2 - (6 / 2)^2`
+		5: simplify (2x)
+			`4 / 2` -> `2`
+		6: simplify
+			`2^2` -> `4`
+		7: simplify (2x)
+			`6 / 2` -> `3`
+		8: simplify
+			`3^2` -> `9`
+		9: rewrite using std::!move_sub
+			`.. - 9 = ..` -> `.. = .. + 9`
+		10: simplify
+			`0 + 9` -> `9`
+		11: rewrite using std::!swap_add
+			`(.. - 4) + ..` -> `.. + (.. - 4)`
+		12: rewrite using std::!move_sub
+			`.. - 4 = ..` -> `.. = .. + 4`
+		13: simplify
+			`9 + 4` -> `13`
+		lhs matches rhs! (std::!sides_equal)
+	answer: correct (true)
+	steps tried: 10023
+	
+1/1 answers are true
+	
+re-run with '--state=QUESTION:STEP' to see the
+state of a question at the given step
+
+*--

@@ -1,0 +1,44 @@
+script			: top_level*
+
+top_level		: import
+				| namespace
+				| declaration
+
+import			: '#' (IDENT '/')* IDENT
+namespace		: IDENT '{' (top_level)* '}'
+
+declaration		: variable_decl
+				| function_decl
+				| theorem_decl
+				| conclusion_decl
+				| question_decl
+
+variable_decl	: '$' IDENT ':=' expression
+function_decl	: '@' IDENT parameters annonation? ':=' expression
+theorem_decl	: '!' IDENT parameters? ':=' expression ':=' expression
+conclusion_decl	: '&' IDENT parameters? ('t' | 'f') ':=' theory
+question_decl	: '?' IDENT? parameters? ':=' theory
+
+parameters		: '(' (IDENT annonation? (',' IDENT annonation?)*)? ')'
+annonation		: ':' TYPE
+
+theory			: or
+or				: xor ('|' xor)*
+xor				: and ('!|' and)*
+and				: binary ('&' binary)*
+binary			: match | comparison | divisible
+match			: expression ('<=>' | '</=>') expression
+comparison		: expression ('>' | '>=' | '<' | '<=') expression
+divisible		: expression '%' expression
+
+expression		: equality
+equality		: term ('=' term)*
+term			: factor (('-' | '+') factor)*
+factor			: unary (('/' | '*') unary)*
+unary			: ('-') unary | power
+power			: primary ('^' power)?
+primary			: NUMBER | '(' expression ')'
+				| variable | call
+
+variable		: IDENT
+call			: IDENT '(' (expression (',' expression)*)? ')'

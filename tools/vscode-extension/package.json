@@ -1,0 +1,90 @@
+{
+  "name": "mqs-lang",
+  "displayName": "MQS",
+  "description": "MQS language extension",
+  "version": "0.0.1",
+  "publisher": "SjVer",
+  "author": {
+    "email": "sjoerd@marsenaar.com",
+    "name": "Sjoerd Vermeulen",
+    "url": "https://github.com/SjVer"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Testing"
+  ],
+  "engines": {
+    "vscode": "^1.63.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "mqs",
+        "aliases": [
+          "MQS",
+          "mqs"
+        ],
+        "extensions": [
+          ".mqs"
+        ],
+        "configuration": "./syntaxes/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mqs",
+        "scopeName": "source.mqs",
+        "path": "./syntaxes/mqs.generated.tmLanguage"
+      }
+    ],
+    "configuration": [
+      {
+          "title": "MQS",
+          "properties": {
+              "mqs.mqsExecutablePath": {
+                  "type": "string",
+                  "default": "/usr/bin/mqs",
+                  "description": "The path to the MQS executable (/usr/bin/mqs by default)"
+              },
+              "mqs.logDebugInfo": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Log debugging information to the console (requires reload)"
+              },
+              "mqs.enableLanguageFeatures": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Enable the language features of the MQS-Lang extension (requires reload)"
+              }
+          }
+      }
+    ]
+  },
+  "activationEvents": [
+    "onLanguage:mqs"
+  ],
+  "main": "./out/mqsMain.js",
+  "scripts": {
+    "vscode:prepublish": "clear; npm run compile && node build-grammar.js",
+    "compile": "clear; tsc --build",
+    "watch": "clear; tsc --build --watch ",
+    "clean": "clear; tsc --build --clean",
+    "grammar": "node build-grammar.js"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.51.0",
+    "@types/js-yaml": "latest",
+    "@types/which": "^2.0.0",
+    "js-yaml": "latest",
+    "plist": "latest"
+  },
+  "dependencies": {
+    "which": "^2.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SjVer/MQS.git"
+  }
+}
