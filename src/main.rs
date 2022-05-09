@@ -1,6 +1,8 @@
-mod common; use common::info;
-mod report;
-mod_and_use!(lex::span::*);
+pub mod info;
+pub mod report;
+pub mod lex;
+
+// use lex::span::{Span, Position};
 use clap::Parser;
 
 
@@ -18,13 +20,17 @@ struct Args {
 fn main() {
     // let args = Args::parse();
 
-    report::error::dispatch_snippet(104, &String::from("duplicate parameter `firstparam`"), 
-        &Span{
-            start: Position{
-                file: String::from("test.mqs"),
-                line: 32,
-                column: 8},
-            length: 5});
+    // report::error::dispatch_snippet(104, &String::from("duplicate parameter `firstparam`"), 
+    //     &Span{
+    //         start: Position{
+    //             file: String::from("test.mqs"),
+    //             line: 32,
+    //             column: 8},
+    //         length: 5});
+    report::error("duplicate parameter `firstparam`", Some(104))
+        .with_note("this is not allowed")
+        .dispatch();
 
-    report::error::dispatch_simple(0, &String::from("could not compile 'test.mqs' due to previous error"));
+    report::error("could not compile 'test.txt' due to previous error", None)
+        .dispatch();
 }
