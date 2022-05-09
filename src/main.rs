@@ -2,9 +2,8 @@ pub mod info;
 pub mod report;
 pub mod lex;
 
-// use lex::span::{Span, Position};
+use lex::span::{Span, Position};
 use clap::Parser;
-
 
 #[derive(Parser, Debug)]
 #[clap(version, about, long_about = info::cli::DESCRIPTION)]
@@ -20,17 +19,28 @@ struct Args {
 fn main() {
     // let args = Args::parse();
 
-    // report::error::dispatch_snippet(104, &String::from("duplicate parameter `firstparam`"), 
-    //     &Span{
-    //         start: Position{
-    //             file: String::from("test.mqs"),
-    //             line: 32,
-    //             column: 8},
-    //         length: 5});
-    report::error("duplicate parameter `firstparam`", Some(104))
-        .with_note("this is not allowed")
+    let span = Span {
+        start: Position {
+            file: "test.txt".to_string(),
+            line: Some(83),
+            column: Some(15),
+        },
+        length: 10,
+    };
+    let span2 = Span {
+        start: Position {
+            file: "test.txt".to_string(),
+            line: Some(83),
+            column: Some(15),
+        },
+        length: 10,
+    };
+
+    new_formatted_error!(DuplicateParameter, "firstparam")
+        .with_label(span, Some("duplicate parameter here"))
+        .with_colored_label(span2, yansi::Color::White, Some("first occurance here"))
+        .with_note("consider removing or renaming the second `firstparam`")
         .dispatch();
 
-    report::error("could not compile 'test.txt' due to previous error", None)
-        .dispatch();
+    new_formatted_error!(CouldNotCompile, "test.txt").dispatch();
 }

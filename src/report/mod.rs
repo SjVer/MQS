@@ -1,31 +1,43 @@
 mod report;
+pub mod code;
 
 use report::Report;
-use crate::info::report::{ERROR_LABEL, CODE_PREFIX};
-// use crate::lex::span::Span;
-use yansi::Color::Red;
+use crate::info::report::*;
+use yansi::Color;
 
-pub fn error(message: impl ToString, code: Option<u8>) -> Report {
+use self::code::ErrorCode;
+
+pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 	let mut label = String::from(ERROR_LABEL);
 
 	if let Some(code) = code {
-		label.push_str(std::format!("[{}{}]", CODE_PREFIX, code).as_str());
+		if code >= ErrorCode::None {
+			label.push_str(std::format!("[{}{:#03}]", CODE_PREFIX, code as u32).as_str());
+		}
 	}
 	
 	Report{
 		label,
-		color: Red,
+		color: Color::Red,
 		message: message.to_string(),
 		labels: vec![],
 		notes: vec![],
 	}
 }
 
-// pub fn dispatch_simple(code: u8, message: &String) -> () {
-// 	d::dispatch_header(Color::Red, ERROR_LABEL, code, message);
-// }
+#[macro_export]
+macro_rules! new_formatted_error {
+	($code:ident $(, $arg:tt)*) => {
+		report::error(fmt_error_msg!($code $($arg)*), Some(report::code::ErrorCode::$code))
+	};
+}
 
-// pub fn dispatch_snippet(code: u8, message: &String, span: &Span) -> () {
-// 	d::dispatch_header(Color::Red, ERROR_LABEL, code, message);
-// 	d::dispatch_snippet(Some(Color::Red), span);
-// }
+pub fn warning(message: impl ToString) -> Report {
+	Report{
+		label: String::from(WARNING_LABEL),
+		color: Color::Yellow,
+		message: message.to_string(),
+		labels: vec![],
+		notes: vec![],
+	}
+}

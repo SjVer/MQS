@@ -1,19 +1,22 @@
 pub struct Position {
 	pub file: String,
-	pub line: u32,
-	pub column: u32,
+	pub line: Option<u32>,
+	pub column: Option<u32>,
 }
 
-impl std::fmt::Display for Position {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		if self.line != 0 && self.column != 0 {
-			write!(f, "{}:{}:{}", self.file, self.line, self.column)
+impl Position {
+	pub fn to_string(&self) -> String {
+		// line and col -> file:line:col
+		if matches!(self.line, Some(_)) && matches!(self.column, Some(_)) {
+			format!("{}:{}:{}", self.file, self.line.unwrap(), self.column.unwrap())
 		}
-		else if self.line != 0 {
-			write!(f, "{}:{}", self.file, self.line)
+		// just line -> file:line
+		else if matches!(self.line, Some(_)) {
+			format!("{}:{}", self.file, self.line.unwrap())
 		}
+		// nothing -> file
 		else {
-			write!(f, "{}", self.file)
+			format!("{}", self.file)
 		}
 	}
 }
