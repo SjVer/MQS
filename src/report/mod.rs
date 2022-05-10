@@ -5,13 +5,11 @@ use report::Report;
 use crate::info::report::*;
 use yansi::Color;
 
-use self::code::ErrorCode;
-
 pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 	let mut label = String::from(ERROR_LABEL);
 
 	if let Some(code) = code {
-		if code >= ErrorCode::None {
+		if code.is_useful() {
 			label.push_str(std::format!("[{}{:#03}]", CODE_PREFIX, code as u32).as_str());
 		}
 	}
@@ -27,7 +25,7 @@ pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 
 #[macro_export]
 macro_rules! new_formatted_error {
-	($code:ident $(, $arg:tt)*) => {
+	($code:ident $($arg:tt)*) => {
 		report::error(fmt_error_msg!($code $($arg)*), Some(report::code::ErrorCode::$code))
 	};
 }

@@ -17,7 +17,7 @@ struct Args {
 }
 
 fn main() {
-    // let args = Args::parse();
+    let args = Args::parse();
 
     let span = Span {
         start: Position {
@@ -36,11 +36,11 @@ fn main() {
         length: 10,
     };
 
-    new_formatted_error!(DuplicateParameter, "firstparam")
+    new_formatted_error!(AlreadyDefined "parameter" "firstparam")
         .with_label(span, Some("duplicate parameter here"))
         .with_colored_label(span2, yansi::Color::White, Some("first occurance here"))
         .with_note("consider removing or renaming the second `firstparam`")
         .dispatch();
 
-    new_formatted_error!(CouldNotCompile, "test.txt").dispatch();
+    new_formatted_error!(CouldNotCompile &args.infile).dispatch();
 }
