@@ -2,22 +2,28 @@ pub mod info;
 pub mod report;
 pub mod lex;
 
-use lex::span::{Span, Position};
 use clap::Parser;
+use lex::span::{Span, Position};
 
+/// struct containing arguments from cli
 #[derive(Parser, Debug)]
 #[clap(version, about, long_about = info::cli::DESCRIPTION)]
-struct Args {
+struct CliArgs {
 
     #[clap(help = info::cli::ARG_INFILE)]
     infile: String,
 
-    #[clap(short, parse(from_occurrences), help = info::cli::ARG_VERBOSE)]
-    verbose: usize,
+    #[clap(short, default_value_t = 1,
+      value_name = "VERBOSITY",
+      help = info::cli::ARG_VERBOSE)]
+    verbosity: usize,
 }
 
 fn main() {
-    let args = Args::parse();
+    // parse and set cli args
+    let cli_args = CliArgs::parse();
+    report::set_verbosity(cli_args.verbosity);
+
 
     let span = Span {
         start: Position {
@@ -42,5 +48,5 @@ fn main() {
         .with_note("consider removing or renaming the second `firstparam`")
         .dispatch();
 
-    new_formatted_error!(CouldNotCompile &args.infile).dispatch();
+    new_formatted_error!(CouldNotCompile &cli_args.infile).dispatch();
 }

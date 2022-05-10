@@ -3,6 +3,11 @@ use crate::info::{report::NOTE_LABEL, app::NAME};
 use std::io::{Write, stderr};
 use yansi::{Color, Paint};
 
+static mut VERBOSITY: u8 = 1;
+pub fn set_verbosity(verbosity: u8) -> () {
+	unsafe { VERBOSITY = verbosity; }
+}
+
 pub struct Label {
 	pub span: Span,
 	pub color: Color,

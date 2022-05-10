@@ -15,7 +15,7 @@ pub mod app {
 pub mod cli {
 	static_string!(DESCRIPTION, "The Official MQS Interpreter - written by Sjoerd Vermeulen");
 	static_string!(ARG_INFILE, "The file to interpret");
-	static_string!(ARG_VERBOSE, "Increase output verbosity");
+	static_string!(ARG_VERBOSE, "Output verbosity (0-2)");
 }
 
 pub mod report {

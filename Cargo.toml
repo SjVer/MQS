@@ -7,3 +7,4 @@ description = "The MQS Interpreter"
 [dependencies]
 clap = { version = "3.1.17", default-features = false, features = ["std", "suggestions", "derive", "env"] }
 yansi = "0.5.1"
+lazy_static = "1.4.0"
