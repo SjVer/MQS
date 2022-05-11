@@ -16,6 +16,11 @@ pub mod cli {
 	static_string!(DESCRIPTION, "The Official MQS Interpreter - written by Sjoerd Vermeulen");
 	static_string!(ARG_INFILE, "The file to interpret");
 	static_string!(ARG_VERBOSE, "Output verbosity (0-2)");
+
+	// static_string!(LINT_NONE_NAME, "none");
+	pub const LINT_NONE_NAME: &str = "none";
+	// static_string!(LINT_DIAG_NAME, "diag");
+	pub const LINT_DIAG_NAME: &str = "diag";
 }
 
 pub mod report {

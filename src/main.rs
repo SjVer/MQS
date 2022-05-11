@@ -1,28 +1,25 @@
 pub mod info;
+pub mod cli;
 pub mod report;
 pub mod lex;
 
-use clap::Parser;
+use cli::*;
 use lex::span::{Span, Position};
+use std::io::{Write, stderr};
 
-/// struct containing arguments from cli
-#[derive(Parser, Debug)]
-#[clap(version, about, long_about = info::cli::DESCRIPTION)]
-struct CliArgs {
-
-    #[clap(help = info::cli::ARG_INFILE)]
-    infile: String,
-
-    #[clap(short, default_value_t = 1,
-      value_name = "VERBOSITY",
-      help = info::cli::ARG_VERBOSE)]
-    verbosity: usize,
-}
+pub static mut VERBOSITY: usize = 2;
 
 fn main() {
     // parse and set cli args
     let cli_args = CliArgs::parse();
-    report::set_verbosity(cli_args.verbosity);
+    if cli_args.verbosity > 2 {
+        writeln!(stderr(), concat!("error: Invalid value \"{}\" for '-v <VERBOSITY>': verbosity not in range 0-2\n\n",
+                                   "For more information try --help"), cli_args.verbosity).unwrap();
+        std::process::exit(1);
+    }
+    unsafe { VERBOSITY = cli_args.verbosity; }
+
+    println!("{:?}", cli_args);
 
 
     let span = Span {

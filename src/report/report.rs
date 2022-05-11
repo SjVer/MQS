@@ -3,11 +3,6 @@ use crate::info::{report::NOTE_LABEL, app::NAME};
 use std::io::{Write, stderr};
 use yansi::{Color, Paint};
 
-static mut VERBOSITY: u8 = 1;
-pub fn set_verbosity(verbosity: u8) -> () {
-	unsafe { VERBOSITY = verbosity; }
-}
-
 pub struct Label {
 	pub span: Span,
 	pub color: Color,
@@ -62,6 +57,7 @@ impl Label {
 }
 
 pub struct Report {
+
 	pub label: String,
 	pub color: Color,
 	pub message: String,
@@ -91,26 +87,10 @@ impl Report {
 		self
 	}
 
-	pub fn dispatch(&self) -> () {
-		// label
+
+	fn generate_heading(&self) -> String {
 		let mut text = self.color.paint(&self.label).bold().to_string();
-
-		// ": " + message
 		text.push_str(&Paint::new(format!(": {}\n", self.message)).bold().to_string());
-
-		// labels
-		for (i, label) in self.labels.iter().enumerate() {
-			// if it isn't the last label, or if notes will follow: add tail 
-			let tail = !self.notes.is_empty() || i + 1 < self.labels.len();
-			text.push_str(&label.to_string(tail));
-		}
-
-		// notes
-		for note in &self.notes {
-			text.push_str(&Paint::new(format!(" {}: ", NOTE_LABEL)).bold().to_string());
-			text.push_str(note);
-			text.push('\n');
-		}
 
 		// add "mqs: " for clearification if debugging
 		if cfg!(debug_assertions) {
@@ -118,6 +98,53 @@ impl Report {
 			text.insert_str(0, &Color::Green.paint(NAME).bold().to_string());
 		}
 		
+		String::from(text)
+	}
+
+	fn generate_labels(&self) -> String {
+		let verb = unsafe { crate::VERBOSITY };
+		let mut text = String::from("");
+
+		for (i, label) in self.labels.iter().enumerate() {
+
+			// if it isn't the last label, or if notes will follow: add tail 
+			let tail = (!self.notes.is_empty() && verb >= 2) || i + 1 < self.labels.len();
+
+			text.push_str(&label.to_string(tail));
+		}
+
+		text
+	}
+
+	fn generate_notes(&self) -> String {
+		let mut text = String::from("");
+
+		for note in &self.notes {
+			text.push_str(&Paint::new(format!(" {}: ", NOTE_LABEL)).bold().to_string());
+			text.push_str(note);
+			text.push('\n');
+		}
+
+		text
+	}
+
+	pub fn dispatch(&self) -> () {
+		let verb = unsafe { crate::VERBOSITY };
+
+		// if verbosity = 0 don't print shit
+		if verb == 0 { return; }
+
+		let mut text = String::from("");
+
+		// label
+		if verb >= 1 { text.push_str(&self.generate_heading()); }
+
+		// labels
+		if verb >= 2 { text.push_str(&self.generate_labels()); }
+
+		// notes
+		if verb >= 2 { text.push_str(&self.generate_notes()); }
+
 		// write it (with leading newline if this isn't the first error)
 		unsafe{
 			if HAS_DISPATCHED { text.insert(0, '\n'); }
