@@ -1,6 +1,7 @@
 #[derive(Clone)]
 pub enum ErrorCode {
 	_N = -100, // codes without code
+	CouldNotOpen,
 	CouldNotCompile,
 
 	None = 0,
@@ -29,6 +30,7 @@ impl ErrorCode {
 
 #[macro_export]
 macro_rules! fmt_error_msg {
+	(CouldNotOpen $file:expr, $why:expr) => (format!("could not open file '{}': {}", $file, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
 	
 	(None) => ("there is no error, why did this appear?");

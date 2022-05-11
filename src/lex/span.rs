@@ -1,10 +1,10 @@
-pub struct Position {
+pub struct Location {
 	pub file: String,
 	pub line: Option<u32>,
 	pub column: Option<u32>,
 }
 
-impl Position {
+impl Location {
 	pub fn to_string(&self) -> String {
 		// line and col -> file:line:col
 		if matches!(self.line, Some(_)) && matches!(self.column, Some(_)) {
@@ -22,6 +22,6 @@ impl Position {
 }
 
 pub struct Span {
-	pub start: Position,
-	pub length: u32,
+	pub start: Location,
+	pub length: usize,
 }

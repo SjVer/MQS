@@ -1,15 +1,20 @@
+use crate::{get_cli_arg, get_lint_mode, lint_mode_is};
 use crate::lex::span::Span;
-use crate::info::{report::NOTE_LABEL, app::NAME};
+use crate::info::{report::{NOTE_LABEL, CODE_PREFIX}, app::NAME};
+use super::code::ErrorCode;
+
 use std::io::{Write, stderr};
 use yansi::{Color, Paint};
+use json::{object, stringify_pretty, JsonValue};
 
-pub struct Label {
+
+pub struct Snippet {
 	pub span: Span,
 	pub color: Color,
 	pub message: Option<String>,
 }
 
-impl Label {
+impl Snippet {
 	pub fn to_string(&self, tail: bool) -> String {
 		//! newline: trialing <br>
 		//! if tail then '│' else '╵'
@@ -56,32 +61,61 @@ impl Label {
 	}
 }
 
+
+pub enum Severity {
+	Note,
+	Warning,
+	Error
+}
+
+impl Severity {
+	fn to_string(&self) -> String {
+		String::from(match self {
+			Severity::Note => "note",
+			Severity::Warning => "warning",
+			Severity::Error => "error",
+		})
+	}
+}
+
+
 pub struct Report {
 
 	pub label: String,
-	pub color: Color,
 	pub message: String,
-
-	pub labels: Vec<Label>,
+	
+	pub color: Color,
+	pub severity: Severity,
+	pub code: Option<ErrorCode>,
+	
+	pub snippet: Option<Snippet>,
+	pub sub_snippet: Vec<Snippet>,
 	pub notes: Vec<String>,
 }
 
 static mut HAS_DISPATCHED: bool = false;
 
 impl Report {
-	pub fn with_colored_label(mut self, span: Span, color: Color, message: Option<impl ToString>) -> Self {
+	pub fn with_snippet(mut self, span: Span, message: Option<impl ToString>) -> Self {
+		let color = self.color.clone();
+		
 		if let Some(msg) = message {
-			self.labels.push(Label{span, color, message: Some(msg.to_string())});
+			self.snippet = Some(Snippet{span, color, message: Some(msg.to_string())});
 		} else {
-			self.labels.push(Label{span, color, message: None});
+			self.snippet = Some(Snippet{span, color, message: None});
 		}
 		self
 	}
-	pub fn with_label(self, span: Span, message: Option<impl ToString>) -> Self {
-		let color = self.color.clone();
-		self.with_colored_label(span, color, message)
+	
+	pub fn with_sub_snippet(mut self, span: Span, message: impl ToString) -> Self {
+		self.sub_snippet.push(Snippet{
+			span,
+			color: Color::White, 
+			message: Some(message.to_string())
+		});
+		self
 	}
-
+	
 	pub fn with_note(mut self, note: impl ToString) -> Self {
 		self.notes.push(note.to_string());
 		self
@@ -89,7 +123,19 @@ impl Report {
 
 
 	fn generate_heading(&self) -> String {
+		// label
 		let mut text = self.color.paint(&self.label).bold().to_string();
+
+		// code if given
+		if let Some(code) = &self.code {
+			if code.is_useful() {
+				text.push_str(&self.color.paint(
+					format!("[{}{}]", CODE_PREFIX, code.clone() as u32))
+					.bold().to_string());
+			}
+		}
+
+		// message
 		text.push_str(&Paint::new(format!(": {}\n", self.message)).bold().to_string());
 
 		// add "mqs: " for clearification if debugging
@@ -101,23 +147,29 @@ impl Report {
 		String::from(text)
 	}
 
-	fn generate_labels(&self) -> String {
-		let verb = unsafe { crate::VERBOSITY };
-		let mut text = String::from("");
+	fn generate_snippet(&self) -> String {
+		if let Some(snippet) = &self.snippet {
+			snippet.to_string(get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty())
+		} else {
+			String::new()
+		}
+	}
 
-		for (i, label) in self.labels.iter().enumerate() {
+	fn generate_sub_snippets(&self) -> String {
+		let dotail = get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty();
+		let mut text = String::new();
 
+		for (i, snippet) in self.sub_snippet.iter().enumerate() {
 			// if it isn't the last label, or if notes will follow: add tail 
-			let tail = (!self.notes.is_empty() && verb >= 2) || i + 1 < self.labels.len();
-
-			text.push_str(&label.to_string(tail));
+			let tail = dotail || i + 1 < self.sub_snippet.len();
+			text.push_str(&snippet.to_string(tail));
 		}
 
 		text
 	}
 
 	fn generate_notes(&self) -> String {
-		let mut text = String::from("");
+		let mut text = String::new();
 
 		for note in &self.notes {
 			text.push_str(&Paint::new(format!(" {}: ", NOTE_LABEL)).bold().to_string());
@@ -128,28 +180,75 @@ impl Report {
 		text
 	}
 
-	pub fn dispatch(&self) -> () {
-		let verb = unsafe { crate::VERBOSITY };
+	pub fn dispatch(&self) {
+		let mut text = String::new();
 
-		// if verbosity = 0 don't print shit
-		if verb == 0 { return; }
+		if lint_mode_is!(Diag) {
+			// output as json object
 
-		let mut text = String::from("");
+			// location and length (default values)
+			let mut location = JsonValue::Boolean(false);
+			let mut length = JsonValue::Number(0_i8.into());
+			
+			// set actual location and length if applicable 
+			if let Some(s) = &self.snippet {
+				location = JsonValue::String(s.span.start.to_string());
+				length = JsonValue::Number(s.span.length.into());
+			}
 
-		// label
-		if verb >= 1 { text.push_str(&self.generate_heading()); }
+			// related snippets
+			let mut related = json::array![];
+			for s in &self.sub_snippet {
+				related.push(object!{
+					"message" => s.message.clone().unwrap_or_default().as_str(),
+					"location" => JsonValue::String(s.span.start.to_string()),
+					"length" => JsonValue::Number(s.span.length.into()),
+				}).unwrap();
+			}
 
-		// labels
-		if verb >= 2 { text.push_str(&self.generate_labels()); }
+			// code if given
+			let code = if let Some(code) = &self.code {
+				if code.is_useful() {
+					JsonValue::String(format!("{}{}", CODE_PREFIX, code.clone() as u32))
+				} else {
+					JsonValue::Boolean(false)
+				}
+			} else {
+				JsonValue::Boolean(false)
+			};
 
-		// notes
-		if verb >= 2 { text.push_str(&self.generate_notes()); }
+			// create the json object and "print" it
+			text = stringify_pretty(object!{
+				"message" => self.message.as_str(),
+				"location" => location,
+				"length" => length,
+				"severity" => self.severity.to_string(),
+				"code" => code,
+				"related" => related
+			}, 4) + ",\n";
 
-		// write it (with leading newline if this isn't the first error)
-		unsafe{
-			if HAS_DISPATCHED { text.insert(0, '\n'); }
-			else { HAS_DISPATCHED = true; }
+		} else {
+			// check if we actually want output
+			let verbosity = get_cli_arg!(verbosity);
+			if verbosity == 0 { return; }
+	
+			// label
+			if verbosity >= 1 { text.push_str(&self.generate_heading()); }
+	
+			// snippets
+			if verbosity >= 2 { text.push_str(&self.generate_snippet()); }
+			if verbosity >= 2 { text.push_str(&self.generate_sub_snippets()); }
+	
+			// notes
+			if verbosity >= 2 { text.push_str(&self.generate_notes()); }
+			
+			// write it (with leading newline if this isn't the first error)
+			unsafe{
+				if HAS_DISPATCHED { text.insert(0, '\n'); }
+				else { HAS_DISPATCHED = true; }
+			}
 		}
+
 		write!(stderr(), "{}", text).unwrap();
 	}
 }

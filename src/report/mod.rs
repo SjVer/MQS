@@ -1,24 +1,21 @@
 mod report;
 pub mod code;
 
-use report::Report;
+use report::{Report, Severity};
 use crate::info::report::*;
 use yansi::Color;
 
 pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
-	let mut label = String::from(ERROR_LABEL);
-
-	if let Some(code) = code {
-		if code.is_useful() {
-			label.push_str(std::format!("[{}{:#03}]", CODE_PREFIX, code as u32).as_str());
-		}
-	}
-	
 	Report{
-		label,
-		color: Color::Red,
+		label: String::from(ERROR_LABEL),
 		message: message.to_string(),
-		labels: vec![],
+
+		color: Color::Red,
+		severity: Severity::Error,
+		code,
+
+		snippet: None,
+		sub_snippet: vec![],
 		notes: vec![],
 	}
 }
@@ -33,9 +30,14 @@ macro_rules! new_formatted_error {
 pub fn warning(message: impl ToString) -> Report {
 	Report{
 		label: String::from(WARNING_LABEL),
-		color: Color::Yellow,
 		message: message.to_string(),
-		labels: vec![],
+
+		color: Color::Yellow,
+		severity: Severity::Warning,
+		code: None,
+
+		snippet: None,
+		sub_snippet: vec![],
 		notes: vec![],
 	}
 }

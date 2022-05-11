@@ -4,46 +4,56 @@ pub mod report;
 pub mod lex;
 
 use cli::*;
-use lex::span::{Span, Position};
-use std::io::{Write, stderr};
+use lex::Lexer;
+use lex::token::TokenKind;
 
-pub static mut VERBOSITY: usize = 2;
+use std::io::{Write, stderr};
+use std::fs::read_to_string;
+
+
+fn prepare_lint() {
+    if lint_mode_is!(Diag) {
+        writeln!(stderr(), "[").unwrap();
+    }
+}
+
+fn finish_lint() {
+    if lint_mode_is!(Diag) {
+        writeln!(stderr(), "]").unwrap();
+    }
+}
 
 fn main() {
-    // parse and set cli args
-    let cli_args = CliArgs::parse();
-    if cli_args.verbosity > 2 {
-        writeln!(stderr(), concat!("error: Invalid value \"{}\" for '-v <VERBOSITY>': verbosity not in range 0-2\n\n",
-                                   "For more information try --help"), cli_args.verbosity).unwrap();
-        std::process::exit(1);
+    // parse cli args
+    cli::setup();
+
+
+    prepare_lint();
+    
+
+    let src = match read_to_string(get_cli_arg!(infile)) {
+        Ok(text) => text,
+        Err(e) => {
+            new_formatted_error!(CouldNotOpen get_cli_arg!(infile), e.kind())
+                .dispatch();
+            std::process::exit(e.raw_os_error().unwrap());
+        }
+    };
+    
+    let mut lex = Lexer::new(get_cli_arg!(infile), &src);
+    let mut tok = lex.next();
+
+    loop {
+        println!("{} => {:?}", tok.span.start.to_string(), tok.kind);
+        if tok.kind == TokenKind::EOF { break; }
+        tok = lex.next();
     }
-    unsafe { VERBOSITY = cli_args.verbosity; }
 
-    println!("{:?}", cli_args);
+    
+
+    new_formatted_error!(CouldNotCompile &get_cli_arg!(infile)).dispatch();
 
 
-    let span = Span {
-        start: Position {
-            file: "test.txt".to_string(),
-            line: Some(83),
-            column: Some(15),
-        },
-        length: 10,
-    };
-    let span2 = Span {
-        start: Position {
-            file: "test.txt".to_string(),
-            line: Some(83),
-            column: Some(15),
-        },
-        length: 10,
-    };
 
-    new_formatted_error!(AlreadyDefined "parameter" "firstparam")
-        .with_label(span, Some("duplicate parameter here"))
-        .with_colored_label(span2, yansi::Color::White, Some("first occurance here"))
-        .with_note("consider removing or renaming the second `firstparam`")
-        .dispatch();
-
-    new_formatted_error!(CouldNotCompile &cli_args.infile).dispatch();
+    finish_lint();
 }
