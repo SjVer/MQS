@@ -5,15 +5,16 @@ pub mod source;
 use span::{Span, Location};
 use token::{Token, TokenKind::{self, *}};
 use source::Source;
-use crate::{fmt_error_msg, report::code::ErrorCode};
+use crate::{fmt_error_msg, deref_source};
+use crate::report::code::ErrorCode;
 
-pub struct Lexer<'a> {
-	source: &'a Source<'a>,
+pub struct Lexer {
+	source: *const Source,
 	start_offset: usize,
 	current_offset: usize,
 	
-	line: u32,
-	column: u32,
+	line: usize,
+	column: usize,
 	filename: String,
 }
 
@@ -35,27 +36,26 @@ macro_rules! formatted_error_token {
 	};
 }
 
-
 // private stuff
-impl<'a> Lexer<'a> {
+impl Lexer {
 
 	fn at_end(&self) -> bool {
 		//
-		self.source.at(self.current_offset) == '\0'
+		deref_source!(self).at(self.current_offset) == '\0'
 	}
 
 	fn advance(&mut self) -> char {
 		self.column += 1;
 		self.current_offset += 1;
-		self.source.at(self.current_offset - 1)
+		deref_source!(self).at(self.current_offset - 1)
 	}
 	fn peek(&self) -> char {
 		// return current char
-		self.source.at(self.current_offset)
+		deref_source!(self).at(self.current_offset)
 	}
 	fn peek_at(&self, offset: usize) -> char {
 		//
-		self.source.at(self.current_offset + offset)
+		deref_source!(self).at(self.current_offset + offset)
 	}
 
 	fn make_token(&self, kind: TokenKind) -> Token {
@@ -66,6 +66,7 @@ impl<'a> Lexer<'a> {
 					file: self.filename.clone(),
 					line: Some(self.line),
 					column: Some(self.column),
+					source: self.source.clone(),
 				},
 				length: self.current_offset - self.start_offset,
 			}
@@ -84,6 +85,7 @@ impl<'a> Lexer<'a> {
 					file: self.filename.clone(),
 					line: Some(self.line),
 					column: Some(self.column),
+					source: self.source.clone(),
 				},
 				length: self.current_offset - self.start_offset,
 			}
@@ -110,7 +112,7 @@ impl<'a> Lexer<'a> {
 		// validate digits
 		let start = if base == 10 { self.start_offset } else { self.start_offset + 2 };
 
-		for c in self.source.slice(start, self.current_offset).chars() {
+		for c in deref_source!(self).slice(start, self.current_offset).chars() {
 			// c is digit or '.' if float
 			if !c.is_digit(base) && (if kind == Float { c != '.' } else { true }) {
 				// invalid digit!
@@ -184,8 +186,8 @@ impl<'a> Lexer<'a> {
 }
 	
 // public stuff
-impl<'a> Lexer<'a> {
-	pub fn new(filename: String, source: &'a Source) -> Self {
+impl Lexer {
+	pub fn new(filename: String, source: *const Source) -> Self {
 		Lexer{
 			source,
 			start_offset: 0,

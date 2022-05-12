@@ -30,19 +30,19 @@ fn main() {
 
     prepare_lint();
     
-
-    let src = match read_to_string(get_cli_arg!(infile)) {
+    let filename = get_cli_arg!(infile);
+    let src = match read_to_string(&filename) {
         Ok(text) => text,
         Err(e) => {
-            new_formatted_error!(CouldNotOpen get_cli_arg!(infile), e.kind())
+            new_formatted_error!(CouldNotOpen &filename, e.kind())
                 .dispatch();
             std::process::exit(e.raw_os_error().unwrap());
         }
     };
 
-    let src = SOURCES!().new_source(get_cli_arg!(infile), src);
+    let src = SOURCES!().new_source(filename.clone(), src);
     
-    let mut lex = Lexer::new(get_cli_arg!(infile), src);
+    let mut lex = Lexer::new(filename.clone(), src);
     let mut tok = lex.next();
 
     loop {
@@ -51,7 +51,9 @@ fn main() {
         if tok.kind == TokenKind::EOF { break; }
 
         else if let TokenKind::Error(code, msg, _) = tok.kind {
-            report::error(msg, Some(code)).dispatch();
+            report::error(msg, Some(code))
+                .with_snippet(tok.span, None::<String>)
+                .dispatch();
         }
 
         tok = lex.next();
@@ -59,7 +61,7 @@ fn main() {
 
     
 
-    new_formatted_error!(CouldNotCompile &get_cli_arg!(infile)).dispatch();
+    new_formatted_error!(CouldNotCompile &filename).dispatch();
 
 
 

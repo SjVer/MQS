@@ -70,7 +70,6 @@ impl TokenKind {
 	}
 }
 
-
 pub struct Token {
 	pub kind: TokenKind,
 	pub span: Span

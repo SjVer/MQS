@@ -1,44 +1,73 @@
 use std::collections::HashMap;
 
-pub struct Source<'a> {
-    pub newlines: Vec<u32>,
-    pub buff: &'a str
+pub struct Source {
+    pub newlines: Vec<usize>,
+    pub buff: String
 }
 
-impl<'a> Source<'a> {
+impl Source {
     pub fn at(&self, offset: usize) -> char {
 		// pub fn at(&self, offset: usize) -> Option<(char, usize)> {
         // self.buff[offset..].chars().nth(0).map(|ch| { (ch, offset + ch.len_utf8()) })
 		self.buff[offset..].chars().nth(0).unwrap_or('\0')
     }
 
-    pub fn slice(&self, start: usize, end: usize) -> &'a str {
+    pub fn slice(&self, start: usize, end: usize) -> &str {
         //
         &self.buff[start..end]
     }
 
+    pub fn slice_line(&self, line: usize) -> Option<&str> {
+        // actual index is `line - 1`
+
+        if line < 1 || line > self.newlines.len() {
+            return None;
+        }
+
+        let start = self.newlines[line - 1];
+        let end = if start == self.newlines.len() {
+            self.buff.len()
+        } else {
+            self.newlines[line]
+        };
+
+        Some(self.slice(start, end))
+    }
 
     pub fn new(contents: String) -> Self {
-        let this = Source {
+        let mut this = Source {
             newlines: vec![],
-            buff: &contents,
+            buff: contents,
         };
+
+        // find newlines
+        for (i, c) in this.buff.chars().enumerate() {
+            if c == '\n' {
+                this.newlines.push(i);
+            }
+        }
 
         this
     }
 }
 
-#[derive(Default)]
-pub struct Sources<'a> {
-    files: HashMap<String, Source<'a>>,
+#[macro_export]
+macro_rules! deref_source {
+	($self:expr) => (unsafe { $self.source.as_ref().unwrap() });
 }
 
-impl<'a> Sources<'a> {
+
+#[derive(Default)]
+pub struct Sources {
+    files: HashMap<String, Source>,
+}
+
+impl Sources {
     pub fn has_source(&self, file: String) -> bool {
         self.files.contains_key(&file)
     }
 
-    pub fn new_source(&mut self, file: String, contents: String) -> &Source<'a> {
+    pub fn new_source(&mut self, file: String, contents: String) -> *const Source {
         //! replaces any existing source with same name
         if self.has_source(file.clone()) {
             self.remove_source(file.clone());
@@ -65,7 +94,7 @@ macro_rules! SOURCES {
             if let None = crate::lex::source::__SOURCES {
                 crate::lex::source::__SOURCES = Some(crate::lex::source::Sources::default());
             }
-            crate::lex::source::__SOURCES.unwrap()
+            crate::lex::source::__SOURCES.as_mut().unwrap()
         }
     };
 }

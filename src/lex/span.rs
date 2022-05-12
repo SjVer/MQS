@@ -1,7 +1,12 @@
+use crate::deref_source;
+use super::source::Source;
+
 pub struct Location {
 	pub file: String,
-	pub line: Option<u32>,
-	pub column: Option<u32>,
+	pub line: Option<usize>,
+	pub column: Option<usize>,
+
+	pub source: *const Source,
 }
 
 impl Location {
@@ -24,4 +29,13 @@ impl Location {
 pub struct Span {
 	pub start: Location,
 	pub length: usize,
+}
+
+impl Span {
+	pub fn get_part_before(&self) -> Option<&str> {
+		match self.start.line {
+			Some(line) => deref_source!(self.start).slice_line(line),
+			None => None,
+		}
+	}
 }
