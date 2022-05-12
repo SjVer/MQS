@@ -17,9 +17,7 @@ pub mod cli {
 	static_string!(ARG_INFILE, "The file to interpret");
 	static_string!(ARG_VERBOSE, "Output verbosity (0-2)");
 
-	// static_string!(LINT_NONE_NAME, "none");
 	pub const LINT_NONE_NAME: &str = "none";
-	// static_string!(LINT_DIAG_NAME, "diag");
 	pub const LINT_DIAG_NAME: &str = "diag";
 }
 
@@ -29,12 +27,3 @@ pub mod report {
 	static_string!(WARNING_LABEL, "warning");
 	static_string!(NOTE_LABEL, "note");
 }
-
-/*
-#[macro_export]
-macro_rules! mod_and_use {
-	($module:ident $(::$path:tt)+) => {
-		mod $module; use $module $(::$path)*;
-	}
-}
-*/

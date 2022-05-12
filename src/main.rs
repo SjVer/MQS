@@ -39,13 +39,21 @@ fn main() {
             std::process::exit(e.raw_os_error().unwrap());
         }
     };
+
+    let src = SOURCES!().new_source(get_cli_arg!(infile), src);
     
-    let mut lex = Lexer::new(get_cli_arg!(infile), &src);
+    let mut lex = Lexer::new(get_cli_arg!(infile), src);
     let mut tok = lex.next();
 
     loop {
         println!("{} => {:?}", tok.span.start.to_string(), tok.kind);
+     
         if tok.kind == TokenKind::EOF { break; }
+
+        else if let TokenKind::Error(code, msg, _) = tok.kind {
+            report::error(msg, Some(code)).dispatch();
+        }
+
         tok = lex.next();
     }
 

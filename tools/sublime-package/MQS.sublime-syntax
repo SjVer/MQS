@@ -11,10 +11,10 @@ variables:
   ident: '[A-Za-z_][A-Za-z_0-9]*'
 
   # numbers
-  decimal: '\b[0-9]+(?:\.[0-9]*)?\b'
-  binary: '\b0b[0-1]+\b'
-  octal: '\b0c[0-7]+\b'
-  hexadecimal: '\b0x[0-9a-fA-F]+\b'
+  decimal: '\b[0-9_]+(?:\.[0-9_]*)?\b'
+  binary: '\b0(?:b|B)(?:[0-1_]|(\S))+\b'
+  octal: '\b0(?:c|C)(?:[0-7_]|(\S))+\b'
+  hexadecimal: '\b0(?:x|X)(?:[0-9a-fA-F_]|(\S))+\b'
   number: '{{decimal}}|{{binary}}|{{octal}}|{{hexadecimal}}'
 
   type: nat|int|flt
@@ -208,7 +208,9 @@ contexts:
 
   number:
     - match: \b{{number}}\b
-      scope: constant.numeric.mqs
+      captures:
+        0: constant.numeric.mqs
+        1: invalid.illegal.mqs
 
   variadic:
     - match: \.\.(?:{{number}})?

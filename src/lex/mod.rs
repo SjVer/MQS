@@ -5,9 +5,10 @@ pub mod source;
 use span::{Span, Location};
 use token::{Token, TokenKind::{self, *}};
 use source::Source;
+use crate::{fmt_error_msg, report::code::ErrorCode};
 
 pub struct Lexer<'a> {
-	source: Source<'a>,
+	source: &'a Source<'a>,
 	start_offset: usize,
 	current_offset: usize,
 	
@@ -16,10 +17,30 @@ pub struct Lexer<'a> {
 	filename: String,
 }
 
+
+macro_rules! formatted_error_token {
+	($self:ident $code:ident $($arg:tt)*) => {
+		$self.error_token(
+			ErrorCode::$code,
+			fmt_error_msg!($code $($arg)*),
+			None
+		)
+	};
+	($kind:expr => $self:ident $code:ident $($arg:tt)*) => {
+		$self.error_token(
+			ErrorCode::$code,
+			fmt_error_msg!($code $($arg)*),
+			Some($kind)
+		)
+	};
+}
+
+
 // private stuff
 impl<'a> Lexer<'a> {
 
 	fn at_end(&self) -> bool {
+		//
 		self.source.at(self.current_offset) == '\0'
 	}
 
@@ -29,14 +50,12 @@ impl<'a> Lexer<'a> {
 		self.source.at(self.current_offset - 1)
 	}
 	fn peek(&self) -> char {
+		// return current char
 		self.source.at(self.current_offset)
 	}
 	fn peek_at(&self, offset: usize) -> char {
-		if self.at_end() || self.source.buff.len() - self.current_offset <= offset {
-			'\0'	
-		} else {
-			self.source.at(self.current_offset + offset)
-		}
+		//
+		self.source.at(self.current_offset + offset)
 	}
 
 	fn make_token(&self, kind: TokenKind) -> Token {
@@ -52,9 +71,14 @@ impl<'a> Lexer<'a> {
 			}
 		}
 	}
-	fn error_token(&self, message: String) -> Token {
+	fn error_token(&self, code: ErrorCode, message: impl ToString, kind: Option<TokenKind>) -> Token {
+		let kind = match kind {
+			Some(kind) => Some(Box::new(kind)),
+			None => None,
+		};
+
 		Token {
-			kind: Error(message),
+			kind: Error(code, message.to_string(), kind),
 			span: Span {
 				start: Location {
 					file: self.filename.clone(),
@@ -66,14 +90,56 @@ impl<'a> Lexer<'a> {
 		}
 	}
 
+	fn number(&mut self, first: char) -> Token {
+		let base = match (first, self.peek()) {
+			('0', 'b' | 'B') => { self.advance(); 2 },
+			('0', 'c' | 'C') => { self.advance(); 7 },
+			('0', 'x' | 'X') => { self.advance(); 16 },
+			_ => 10,
+		};
+
+		let mut kind = Integer;
+
+		while self.peek().is_alphanumeric() { self.advance(); }
+		if base == 10 && self.peek() == '.' {
+			kind = Float;
+			self.advance();
+			while self.peek().is_alphanumeric() { self.advance(); }
+		}
+
+		// validate digits
+		let start = if base == 10 { self.start_offset } else { self.start_offset + 2 };
+
+		for c in self.source.slice(start, self.current_offset).chars() {
+			// c is digit or '.' if float
+			if !c.is_digit(base) && (if kind == Float { c != '.' } else { true }) {
+				// invalid digit!
+				let base_str = match base {
+					2 => "binary",
+					7 => "octal",
+					10 => "decimal",
+					16 => "hexadecimal",
+					_ => unreachable!(),
+				};
+
+				return formatted_error_token!(kind =>
+					self InvalidDigit c, base_str,
+					if kind == Integer { "integer" } else { "float" }
+				);
+			}
+		}
+
+		self.make_token(kind)
+	}
+
 	fn skip_ignored(&mut self) {
-		loop {
+		'base: loop {
 			match self.peek() {
 				' ' | '\r' | '\t' => { self.advance(); },
 				'\n' => {
+					self.advance();
 					self.line += 1;
 					self.column = 0;
-					self.advance();
 					continue;
 				},
 				'-' => {
@@ -85,21 +151,22 @@ impl<'a> Lexer<'a> {
 						
 						if self.peek() == '*' {
 							// block
+							self.advance(); // skip '*'
+
 							loop {
 								if self.peek() == '*'
 								&& self.peek_at(1) == '-'
 								&& self.peek_at(2) == '-' {
 									self.advance();
 									self.advance();
+									self.advance();
+									continue 'base;
 								}
 								else if self.at_end() { return; }
-								else if self.peek() == '\n' {
+								else if self.advance() == '\n' {
 									self.line += 1;
 									self.column = 0;
 								}
-
-								println!("sc: {:?}", self.peek());
-								self.advance();
 							}
 						} else {
 							// line
@@ -118,14 +185,14 @@ impl<'a> Lexer<'a> {
 	
 // public stuff
 impl<'a> Lexer<'a> {
-	pub fn new(filename: String, source: &'a str) -> Self {
+	pub fn new(filename: String, source: &'a Source) -> Self {
 		Lexer{
-			source: Source { buff: source },
+			source,
 			start_offset: 0,
 			current_offset: 0,
 
 			line: 1,
-			column: 1,
+			column: 0,
 			filename,
 		}
 	}
@@ -135,20 +202,23 @@ impl<'a> Lexer<'a> {
 
 		self.start_offset = self.current_offset;
 
-		if self.at_end() { return self.make_token(EOF); }
+		if self.at_end() {
+			self.advance();
+			return self.make_token(EOF);
+		}
 
 		let c = self.advance();
 
 		// if c.is_alphabetic() { return self.identifier(); }
-		// if c.is_numeric() { return self.number(); }
+		if c.is_numeric() { return self.number(c); }
 
-		if let Some(kind) = TokenKind::from_char(c) {
-			return self.make_token(kind);
-		} else if let Some(kind) = TokenKind::from_chars(c, self.peek()) {
+		if let Some(kind) = TokenKind::from_chars(c, self.peek()) {
 			self.advance();
+			return self.make_token(kind);
+		} else if let Some(kind) = TokenKind::from_char(c) {
 			return self.make_token(kind);
 		}
 		
-		self.error_token(format!("unexpected character {:?}", c))
+		formatted_error_token!(self UnExpectedChar c)
 	}
 }

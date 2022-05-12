@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorCode {
 	_N = -100, // codes without code
 	CouldNotOpen,
@@ -6,7 +6,11 @@ pub enum ErrorCode {
 
 	None = 0,
 
-	_S = 100, // syntax-error codes
+	_L = 100, // lexical-error codes
+	UnExpectedChar,
+	InvalidDigit,
+
+	_S = 200, // syntax-error codes
 	ExpectedToken,
 	UnExpectedToken,
 	AlreadyDefined,
@@ -34,6 +38,9 @@ macro_rules! fmt_error_msg {
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
 	
 	(None) => ("there is no error, why did this appear?");
+
+	(UnExpectedChar $chr:expr) => (format!("unexpected character {:?}", $chr));
+	(InvalidDigit $chr:expr, $base:expr, $t:expr) => (format!("invalid digit {:?} in {} {}", $chr, $base, $t));
 
 	(ExpectedToken $tok:expr) => (format!("expected token `{}`", $tok));
 	(UnExpectedToken $tok:expr) => (format!("unexpected token `{}`", $tok));

@@ -1,4 +1,5 @@
 use super::span::Span;
+use crate::report::code::ErrorCode;
 
 #[derive(Debug, PartialEq)]
 pub enum TokenKind {
@@ -8,7 +9,12 @@ pub enum TokenKind {
 	LeftParen,
 	RightParen,
 
-	// operators
+	// theory operators
+
+
+	// expression operators
+	Equal,
+	NotEqual,
 	Plus,
 	Minus,
 	Multiply,
@@ -21,7 +27,7 @@ pub enum TokenKind {
 	
 	// misc.
 	EOF,
-	Error(String),
+	Error(ErrorCode, String, Option<Box<TokenKind>>),
 }
 
 macro_rules! __somestr {
@@ -35,25 +41,6 @@ macro_rules! __somekind {
 }
 
 impl TokenKind {
-	pub fn source_literal(&self) -> Option<String> {
-		match self {
-			
-			Self::LeftBrace		=> __somestr!("{"),
-			Self::RightBrace	=> __somestr!("}"),
-			Self::LeftParen		=> __somestr!("("),
-			Self::RightParen	=> __somestr!(")"),
-
-			Self::Plus			=> __somestr!("+"),
-			Self::Minus			=> __somestr!("-"),
-			Self::Multiply		=> __somestr!("*"),
-			Self::Divide		=> __somestr!("/"),
-			Self::Power			=> __somestr!("^"),
-
-			Self::EOF			=> __somestr!("EOF"),
-			_ => None
-		}
-	}
-
 	pub fn from_char(c: char) -> Option<Self> {
 		match c {
 			
@@ -62,6 +49,7 @@ impl TokenKind {
 			'(' => __somekind!(LeftParen),
 			')' => __somekind!(RightParen),
 
+			'=' => __somekind!(Equal),
 			'+' => __somekind!(Plus),
 			'-' => __somekind!(Minus),
 			'*' => __somekind!(Multiply),
@@ -73,19 +61,10 @@ impl TokenKind {
 	}
 
 	pub fn from_chars(c1: char, c2: char) -> Option<Self> {
-		match c {
+		match (c1, c2) {
+
+			('/', '=') => __somekind!(NotEqual),
 			
-			'{' => __somekind!(LeftBrace),
-			'}' => __somekind!(RightBrace),
-			'(' => __somekind!(LeftParen),
-			')' => __somekind!(RightParen),
-
-			'+' => __somekind!(Plus),
-			'-' => __somekind!(Minus),
-			'*' => __somekind!(Multiply),
-			'/' => __somekind!(Divide),
-			'^' => __somekind!(Power),
-
 			_ => None
 		}
 	}
