@@ -59,16 +59,18 @@ impl Lexer {
 	}
 
 	fn make_token(&self, kind: TokenKind) -> Token {
+		let length = self.current_offset - self.start_offset;
+
 		Token {
 			kind,
 			span: Span {
 				start: Location {
 					file: self.filename.clone(),
 					line: Some(self.line),
-					column: Some(self.column),
+					column: Some(self.column - length),
 					source: self.source.clone(),
 				},
-				length: self.current_offset - self.start_offset,
+				length,
 			}
 		}
 	}
@@ -77,6 +79,7 @@ impl Lexer {
 			Some(kind) => Some(Box::new(kind)),
 			None => None,
 		};
+		let length = self.current_offset - self.start_offset;
 
 		Token {
 			kind: Error(code, message.to_string(), kind),
@@ -84,10 +87,10 @@ impl Lexer {
 				start: Location {
 					file: self.filename.clone(),
 					line: Some(self.line),
-					column: Some(self.column),
+					column: Some(self.column - length),
 					source: self.source.clone(),
 				},
-				length: self.current_offset - self.start_offset,
+				length,
 			}
 		}
 	}
@@ -111,7 +114,6 @@ impl Lexer {
 
 		// validate digits
 		let start = if base == 10 { self.start_offset } else { self.start_offset + 2 };
-
 		for c in deref_source!(self).slice(start, self.current_offset).chars() {
 			// c is digit or '.' if float
 			if !c.is_digit(base) && (if kind == Float { c != '.' } else { true }) {

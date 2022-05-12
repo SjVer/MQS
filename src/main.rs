@@ -46,13 +46,13 @@ fn main() {
     let mut tok = lex.next();
 
     loop {
-        println!("{} => {:?}", tok.span.start.to_string(), tok.kind);
+        println!("{}-{} => {:?}", tok.span.start.to_string(), tok.span.length, tok.kind);
      
         if tok.kind == TokenKind::EOF { break; }
 
         else if let TokenKind::Error(code, msg, _) = tok.kind {
             report::error(msg, Some(code))
-                .with_snippet(tok.span, None::<String>)
+                .with_quote(tok.span, None::<String>)
                 .dispatch();
         }
 

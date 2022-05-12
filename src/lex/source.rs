@@ -19,24 +19,12 @@ impl Source {
 
     pub fn slice_line(&self, line: usize) -> Option<&str> {
         // actual index is `line - 1`
-
-        if line < 1 || line > self.newlines.len() {
-            return None;
-        }
-
-        let start = self.newlines[line - 1];
-        let end = if start == self.newlines.len() {
-            self.buff.len()
-        } else {
-            self.newlines[line]
-        };
-
-        Some(self.slice(start, end))
+        self.buff.lines().nth(line - 1)
     }
 
     pub fn new(contents: String) -> Self {
         let mut this = Source {
-            newlines: vec![],
+            newlines: vec![0],
             buff: contents,
         };
 

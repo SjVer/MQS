@@ -8,13 +8,13 @@ use yansi::{Color, Paint};
 use json::{object, stringify_pretty, JsonValue};
 
 
-pub struct Snippet {
+pub struct Quote {
 	pub span: Span,
 	pub color: Color,
 	pub message: Option<String>,
 }
 
-impl Snippet {
+impl Quote {
 	pub fn to_string(&self, tail: bool) -> String {
 		//! newline: trialing <br>
 		//! if tail then '│' else '╵'
@@ -30,26 +30,43 @@ impl Snippet {
 		
 		// no line? return
 		if let None = self.span.start.line { return text; }
-		let line = self.span.start.line.unwrap();
+		let lineno = self.span.start.line.unwrap();
 
 		// make sure that we know the amount of digits in the lineno
 		// for correct padding and whatnot
-		let digits = line.to_string().len();
+		let digits = lineno.to_string().len();
 
-		// " lineno │ ..."
-		text.push_str(&cyan(format!(" {:1$} │ ", line - 1, digits)));
-		/* tmp */ text.push_str("var a = 123;\n");
 
-		// " lineno │ ..."
-		text.push_str(&cyan(format!(" {:1$} │ ", line, digits)));
-		/* tmp */ text.push_str("func f(firstparam, firstparam) {\n");
+
+		// before: " lineno │ ..."
+		if let Some(line) = self.span.get_line_before() {
+			text.push_str(&cyan(format!(" {:1$} │ ", lineno - 1, digits)));
+			text.push_str(line);
+			text.push('\n');
+		}
+
+		
+		
+		// line: " lineno │ ..."
+		text.push_str(&cyan(format!(" {:1$} │ ", lineno, digits)));
+		let part_before = self.span.get_part_before().unwrap();
+		text.push_str(part_before);
+		text.push_str(&color(self.span.get_part().unwrap()));
+		text.push_str(self.span.get_part_after().unwrap());
+		text.push('\n');
+
 
 		// token marking
 		text.push_str(&cyan(format!(" {:2$} {} ", "", if tail {'│'} else {'╵'}, digits)));
-		/* tmp */ text.push_str(&color("                   ^~~~~~~~~~ ".to_string()));
+		for _ in 0..part_before.len() { text.push(' '); }
+		let mut mark = String::from("^");
+		for _ in 1..self.span.length { mark.push('~'); }
+		text.push_str(&color(&mark));
+
+
 
 		// token marking message
-		if let Some(msg) = &self.message { text.push_str(&color(msg.to_string())); }
+		if let Some(msg) = &self.message { text.push_str(&color(msg)); }
 		text.push('\n');
 		
 		// optional tail
@@ -88,27 +105,27 @@ pub struct Report {
 	pub severity: Severity,
 	pub code: Option<ErrorCode>,
 	
-	pub snippet: Option<Snippet>,
-	pub sub_snippet: Vec<Snippet>,
+	pub quote: Option<Quote>,
+	pub sub_quotes: Vec<Quote>,
 	pub notes: Vec<String>,
 }
 
 static mut HAS_DISPATCHED: bool = false;
 
 impl Report {
-	pub fn with_snippet(mut self, span: Span, message: Option<impl ToString>) -> Self {
+	pub fn with_quote(mut self, span: Span, message: Option<impl ToString>) -> Self {
 		let color = self.color.clone();
 		
 		if let Some(msg) = message {
-			self.snippet = Some(Snippet{span, color, message: Some(msg.to_string())});
+			self.quote = Some(Quote{span, color, message: Some(msg.to_string())});
 		} else {
-			self.snippet = Some(Snippet{span, color, message: None});
+			self.quote = Some(Quote{span, color, message: None});
 		}
 		self
 	}
 	
-	pub fn with_sub_snippet(mut self, span: Span, message: impl ToString) -> Self {
-		self.sub_snippet.push(Snippet{
+	pub fn with_sub_quote(mut self, span: Span, message: impl ToString) -> Self {
+		self.sub_quotes.push(Quote{
 			span,
 			color: Color::White, 
 			message: Some(message.to_string())
@@ -147,22 +164,22 @@ impl Report {
 		String::from(text)
 	}
 
-	fn generate_snippet(&self) -> String {
-		if let Some(snippet) = &self.snippet {
-			snippet.to_string(get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty())
+	fn generate_quote(&self) -> String {
+		if let Some(quote) = &self.quote {
+			quote.to_string(get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty())
 		} else {
 			String::new()
 		}
 	}
 
-	fn generate_sub_snippets(&self) -> String {
+	fn generate_sub_quotes(&self) -> String {
 		let dotail = get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty();
 		let mut text = String::new();
 
-		for (i, snippet) in self.sub_snippet.iter().enumerate() {
+		for (i, quote) in self.sub_quotes.iter().enumerate() {
 			// if it isn't the last label, or if notes will follow: add tail 
-			let tail = dotail || i + 1 < self.sub_snippet.len();
-			text.push_str(&snippet.to_string(tail));
+			let tail = dotail || i + 1 < self.sub_quotes.len();
+			text.push_str(&quote.to_string(tail));
 		}
 
 		text
@@ -191,14 +208,14 @@ impl Report {
 			let mut length = JsonValue::Number(0_i8.into());
 			
 			// set actual location and length if applicable 
-			if let Some(s) = &self.snippet {
+			if let Some(s) = &self.quote {
 				location = JsonValue::String(s.span.start.to_string());
 				length = JsonValue::Number(s.span.length.into());
 			}
 
-			// related snippets
+			// related quotes
 			let mut related = json::array![];
-			for s in &self.sub_snippet {
+			for s in &self.sub_quotes {
 				related.push(object!{
 					"message" => s.message.clone().unwrap_or_default().as_str(),
 					"location" => JsonValue::String(s.span.start.to_string()),
@@ -235,9 +252,9 @@ impl Report {
 			// label
 			if verbosity >= 1 { text.push_str(&self.generate_heading()); }
 	
-			// snippets
-			if verbosity >= 2 { text.push_str(&self.generate_snippet()); }
-			if verbosity >= 2 { text.push_str(&self.generate_sub_snippets()); }
+			// quotes
+			if verbosity >= 2 { text.push_str(&self.generate_quote()); }
+			if verbosity >= 2 { text.push_str(&self.generate_sub_quotes()); }
 	
 			// notes
 			if verbosity >= 2 { text.push_str(&self.generate_notes()); }

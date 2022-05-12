@@ -14,8 +14,8 @@ pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 		severity: Severity::Error,
 		code,
 
-		snippet: None,
-		sub_snippet: vec![],
+		quote: None,
+		sub_quotes: vec![],
 		notes: vec![],
 	}
 }
@@ -36,8 +36,8 @@ pub fn warning(message: impl ToString) -> Report {
 		severity: Severity::Warning,
 		code: None,
 
-		snippet: None,
-		sub_snippet: vec![],
+		quote: None,
+		sub_quotes: vec![],
 		notes: vec![],
 	}
 }
