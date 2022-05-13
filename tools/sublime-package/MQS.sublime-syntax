@@ -8,7 +8,7 @@ fileTypes: [.mqs]
 scope: source.mqs
 
 variables:
-  ident: '[A-Za-z_][A-Za-z_0-9]*'
+  ident: '[A-Za-z_][A-Za-z_0-9]*''*'
 
   # numbers
   decimal: '\b[0-9_]+(?:\.[0-9_]*)?\b'
@@ -19,6 +19,7 @@ variables:
 
   type: nat|int|flt
 
+  importsym: ~|\.|\/
   annpattern: (?:\s*(:)\s*(?:({{type}})|(\S*)))?
   declpattern: \s*(?:({{ident}})|(\S*))\s*
 
@@ -77,10 +78,14 @@ contexts:
     - include: question-decl
 
   import:
-    - match: (#)\s*((?:{{ident}}\s*\/\s*)*(?:{{ident}}))
+    - match: (#)\s*(?:({{importsym}})\s*(\/))?\s*(?:({{ident}})\s*(\/)\s*)*({{ident}})
       captures:
         1: keyword.control.import.mqs
-        2: entity.name.namespace.mqs
+        2: entity.name.function.mqs
+        3: keyword.operator.path-separator.mqs
+        4: entity.name.namespace.mqs
+        5: keyword.operator.path-separator.mqs
+        6: entity.name.namespace.mqs
 
   theorem-decl:
     - match: (!){{declpattern}}

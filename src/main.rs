@@ -1,7 +1,9 @@
-pub mod info;
-pub mod cli;
-pub mod report;
 pub mod lex;
+pub mod parse;
+pub mod report;
+pub mod runtime;
+pub mod cli;
+pub mod info;
 
 use cli::*;
 use lex::Lexer;
@@ -44,6 +46,8 @@ fn main() {
     let mut tok = lex.next();
 
     loop {
+        println!("{} => {:?}", tok.span.start.to_string(), tok.kind);
+
         if tok.kind == TokenKind::EOF { break; }
 
         else if let TokenKind::Error(code, msg, _) = tok.kind {

@@ -7,6 +7,7 @@ use token::{Token, TokenKind::{self, *}};
 use source::Source;
 use crate::{fmt_error_msg, deref_source};
 use crate::report::code::ErrorCode;
+use crate::runtime::types::Type;
 
 pub struct Lexer {
 	source: *const Source,
@@ -95,6 +96,18 @@ impl Lexer {
 		}
 	}
 
+	fn identifier(&mut self) -> Token {
+		while self.peek().is_alphanumeric() || self.peek() == '_' { self.advance(); }
+		while self.peek() == '\'' { self.advance(); }
+
+		// get ident
+		let ident = deref_source!(self).slice(self.start_offset, self.current_offset);
+
+		match <dyn Type>::from_string(ident.to_string()) {
+			Some(_) => self.make_token(Type),
+			None => self.make_token(Identifier),
+		}
+	}
 	fn number(&mut self, first: char) -> Token {
 		let base = match (first, self.peek()) {
 			('0', 'b' | 'B') => { self.advance(); 2 },
@@ -140,12 +153,6 @@ impl Lexer {
 		'base: loop {
 			match self.peek() {
 				' ' | '\r' | '\t' => { self.advance(); },
-				'\n' => {
-					self.advance();
-					self.line += 1;
-					self.column = 0;
-					continue;
-				},
 				'-' => {
 					if self.peek_at(1) == '-' {
 						// comment
@@ -205,24 +212,39 @@ impl Lexer {
 		self.skip_ignored();
 
 		self.start_offset = self.current_offset;
+		
+		let c = self.advance();
 
-		if self.at_end() {
-			self.advance();
+		if c == '\0' || self.at_end() {
 			return self.make_token(EOF);
 		}
 
-		let c = self.advance();
+		else if c == '\n' {
+			let tok = self.make_token(Newline);
 
-		// if c.is_alphabetic() { return self.identifier(); }
-		if c.is_numeric() { return self.number(c); }
+			while self.peek() == '\n' {
+				self.advance();
 
-		if let Some(kind) = TokenKind::from_chars(c, self.peek()) {
+				self.line += 1;
+				self.column = 0;
+
+				self.skip_ignored();
+			}
+
+			return tok;
+		}
+
+		else if c.is_alphabetic() { return self.identifier(); }
+		else if c.is_numeric() { return self.number(c); }
+
+		else if let Some(kind) = TokenKind::from_chars(c, self.peek()) {
 			self.advance();
 			return self.make_token(kind);
-		} else if let Some(kind) = TokenKind::from_char(c) {
+		}
+		else if let Some(kind) = TokenKind::from_char(c) {
 			return self.make_token(kind);
 		}
 		
-		formatted_error_token!(self UnExpectedChar c)
+		formatted_error_token!(self UnexpectedChar c)
 	}
 }

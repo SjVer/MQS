@@ -1,3 +1,4 @@
-* 3.0 --* lol 
-*-- - 0x4
-1 + 0B21 -- lol
+-- simple formula
+@f(x: int): int := 2 x
+
+f'(x)

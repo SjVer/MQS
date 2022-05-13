@@ -11,12 +11,12 @@ pub enum ErrorCode {
 	NoError = 0,
 
 	_L = 100, // lexical-error codes
-	UnExpectedChar,
+	UnexpectedChar,
 	InvalidDigit,
 
 	_S = 200, // syntax-error codes
 	ExpectedToken,
-	UnExpectedToken,
+	UnexpectedToken,
 	AlreadyDefined,
 	UseOfUndefined,
 	DuplicateParameter,
@@ -27,7 +27,7 @@ pub enum ErrorCode {
 	InvalidData,
 	InvalidIndex,
 	InvalidChecksum,
-	NonExistentString,
+	NonexistentString,
 }
 
 impl ErrorCode {
@@ -61,11 +61,11 @@ macro_rules! fmt_error_msg {
 	
 	(NoError) => ("there is no error, why did this appear?");
 
-	(UnExpectedChar $chr:expr) => (format!("unexpected character {:?}", $chr));
+	(UnexpectedChar $chr:expr) => (format!("unexpected character {:?}", $chr));
 	(InvalidDigit $chr:expr, $base:expr, $t:expr) => (format!("invalid digit {:?} in {} {}", $chr, $base, $t));
 
 	(ExpectedToken $tok:expr) => (format!("expected token `{}`", $tok));
-	(UnExpectedToken $tok:expr) => (format!("unexpected token `{}`", $tok));
+	(UnexpectedToken $tok:expr) => (format!("unexpected token `{}`", $tok));
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));
 	(DuplicateParameter $param:expr) => (format!("duplicate parameter `{}`", $param));
@@ -75,5 +75,5 @@ macro_rules! fmt_error_msg {
 	(InvalidData) => ("invalid data");
 	(InvalidIndex $of:expr) => ("invalid {} index", $of);
 	(InvalidChecksum) => ("invalid checksum");
-	(NonExistentString) => ("use of nonexistent string");
+	(NonexistentString) => ("use of nonexistent string");
 }

@@ -89,7 +89,7 @@ pub fn setup() {
                     None => String::new()
                 };
 
-                println!("Error code E{}: {}{}", code, e.get_name(), t);
+                println!("error code E{}: {}{}", code, e.get_name(), t);
                 std::process::exit(0);
             },
             Err(_) => {
