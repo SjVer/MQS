@@ -1,7 +1,7 @@
 use crate::info::cli;
-pub use clap::{Parser, ArgEnum, AppSettings::DeriveDisplayOrder};
+use clap::{Parser, ArgEnum, AppSettings::DeriveDisplayOrder};
+use crate::report::code::ErrorCode;
 use std::io::{Write, stderr};
-
 
 pub static mut CLI_ARGS: Option<CliArgs> = None;
 
@@ -32,12 +32,18 @@ pub struct CliArgs {
     #[clap(help = cli::ARG_INFILE)]
     pub infile: String,
 
-    #[clap(short, default_value_t = 2)]
-    #[clap(value_name = "VERBOSITY", help = cli::ARG_VERBOSE)]
-    pub verbosity: usize,
+    #[clap(short, long, help = cli::ARG_COMPACT)]
+    pub compact: bool,
+
+    #[clap(short, long, help = cli::ARG_QUIET)]
+    pub quiet: bool,
 
     #[clap(long)]
     pub lint: Option<LintMode>,
+
+
+    #[clap(long, help = cli::ARG_EXPLAIN)]
+    pub explain: Option<u8>,
 }
 
 
@@ -73,9 +79,25 @@ impl std::fmt::Display for LintMode {
 
 pub fn setup() {
     unsafe { CLI_ARGS = Some(CliArgs::parse()); }
-    if get_cli_arg!(verbosity) > 2 {
-        writeln!(stderr(), concat!("error: Invalid value \"{}\" for '-v <VERBOSITY>': verbosity not in range 0-2\n\n",
-                                   "For more information try --help"), get_cli_arg!(verbosity)).unwrap();
-        std::process::exit(1);
+    
+    if let Some(code) = get_cli_arg!(explain) {
+        // explain error
+        match ErrorCode::try_from(code as i16) {
+            Ok(e) => {
+                let t = match e.get_type() {
+                    Some(t) => format!(" ({} error)", t),
+                    None => String::new()
+                };
+
+                println!("Error code E{}: {}{}", code, e.get_name(), t);
+                std::process::exit(0);
+            },
+            Err(_) => {
+                writeln!(stderr(), "cannot explain invalid error code {:?}", code)
+                    .unwrap();
+                std::process::exit(1);
+            },
+        }
+
     }
 }

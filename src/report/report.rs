@@ -58,7 +58,7 @@ impl Quote {
 
 		// token marking
 		text.push_str(&cyan(format!(" {:2$} {} ", "", if tail {'│'} else {'╵'}, digits)));
-		for _ in 0..part_before.len() { text.push(' '); }
+		for c in part_before.chars() { text.push(if c != '\t' { ' ' } else { '\t' }); }
 		let mut mark = String::from("^");
 		for _ in 1..self.span.length { mark.push('~'); }
 		text.push_str(&color(&mark));
@@ -66,7 +66,10 @@ impl Quote {
 
 
 		// token marking message
-		if let Some(msg) = &self.message { text.push_str(&color(msg)); }
+		if let Some(msg) = &self.message {
+			text.push(' ');
+			text.push_str(&color(msg));
+		}
 		text.push('\n');
 		
 		// optional tail
@@ -152,6 +155,15 @@ impl Report {
 			}
 		}
 
+		// quote location if compact and given
+		if let Some(quote) = &self.quote {
+			if get_cli_arg!(compact) {
+				let pos = quote.span.start.to_string();
+				let colored = Color::Cyan.paint(pos).bold().to_string();
+				text.push_str(&format!(": {}", colored));
+			}
+		}
+
 		// message
 		text.push_str(&Paint::new(format!(": {}\n", self.message)).bold().to_string());
 
@@ -166,14 +178,14 @@ impl Report {
 
 	fn generate_quote(&self) -> String {
 		if let Some(quote) = &self.quote {
-			quote.to_string(get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty())
+			quote.to_string(!get_cli_arg!(compact) && !self.notes.is_empty())
 		} else {
 			String::new()
 		}
 	}
 
 	fn generate_sub_quotes(&self) -> String {
-		let dotail = get_cli_arg!(verbosity) >= 2 && !self.notes.is_empty();
+		let dotail = !get_cli_arg!(compact) && !self.notes.is_empty();
 		let mut text = String::new();
 
 		for (i, quote) in self.sub_quotes.iter().enumerate() {
@@ -198,10 +210,13 @@ impl Report {
 	}
 
 	pub fn dispatch(&self) {
-		let mut text = String::new();
-
 		if lint_mode_is!(Diag) {
 			// output as json object
+
+			// dont output useless errors
+			if let Some(code) = &self.code {
+				if !code.is_useful() { return; }
+			}
 
 			// location and length (default values)
 			let mut location = JsonValue::Boolean(false);
@@ -235,37 +250,37 @@ impl Report {
 			};
 
 			// create the json object and "print" it
-			text = stringify_pretty(object!{
-				"message" => self.message.as_str(),
-				"location" => location,
-				"length" => length,
-				"severity" => self.severity.to_string(),
-				"code" => code,
-				"related" => related
-			}, 4) + ",\n";
-
+			println!("{},", stringify_pretty(object!{
+					"message" => self.message.as_str(),
+					"location" => location,
+					"length" => length,
+					"severity" => self.severity.to_string(),
+					"code" => code,
+					"related" => related
+				}, 4)
+			);
 		} else {
 			// check if we actually want output
-			let verbosity = get_cli_arg!(verbosity);
-			if verbosity == 0 { return; }
+			if get_cli_arg!(quiet) { return; }
+
+			let mut text = String::new();
 	
 			// label
-			if verbosity >= 1 { text.push_str(&self.generate_heading()); }
+			text.push_str(&self.generate_heading());
 	
 			// quotes
-			if verbosity >= 2 { text.push_str(&self.generate_quote()); }
-			if verbosity >= 2 { text.push_str(&self.generate_sub_quotes()); }
-	
-			// notes
-			if verbosity >= 2 { text.push_str(&self.generate_notes()); }
-			
-			// write it (with leading newline if this isn't the first error)
-			unsafe{
-				if HAS_DISPATCHED { text.insert(0, '\n'); }
-				else { HAS_DISPATCHED = true; }
-			}
-		}
+			if !get_cli_arg!(compact) {
+				text.push_str(&self.generate_quote());
+				text.push_str(&self.generate_sub_quotes());
+				text.push_str(&self.generate_notes());
 
-		write!(stderr(), "{}", text).unwrap();
+				unsafe{
+					if HAS_DISPATCHED { text.insert(0, '\n'); }
+					else { HAS_DISPATCHED = true; }
+				}
+			}
+			
+			write!(stderr(), "{}", text).unwrap();
+		}
 	}
 }

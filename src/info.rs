@@ -15,7 +15,9 @@ pub mod app {
 pub mod cli {
 	static_string!(DESCRIPTION, "The Official MQS Interpreter - written by Sjoerd Vermeulen");
 	static_string!(ARG_INFILE, "The file to interpret");
-	static_string!(ARG_VERBOSE, "Output verbosity (0-2)");
+	static_string!(ARG_COMPACT, "Produce compact output");
+	static_string!(ARG_QUIET, "Hide all output");
+	static_string!(ARG_EXPLAIN, "Explain the given error code");
 
 	pub const LINT_NONE_NAME: &str = "none";
 	pub const LINT_DIAG_NAME: &str = "diag";

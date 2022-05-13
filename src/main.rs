@@ -6,20 +6,18 @@ pub mod lex;
 use cli::*;
 use lex::Lexer;
 use lex::token::TokenKind;
-
-use std::io::{Write, stderr};
 use std::fs::read_to_string;
 
 
 fn prepare_lint() {
     if lint_mode_is!(Diag) {
-        writeln!(stderr(), "[").unwrap();
+        println!("[");
     }
 }
 
 fn finish_lint() {
     if lint_mode_is!(Diag) {
-        writeln!(stderr(), "]").unwrap();
+        println!("]");
     }
 }
 
@@ -46,8 +44,6 @@ fn main() {
     let mut tok = lex.next();
 
     loop {
-        println!("{}-{} => {:?}", tok.span.start.to_string(), tok.span.length, tok.kind);
-     
         if tok.kind == TokenKind::EOF { break; }
 
         else if let TokenKind::Error(code, msg, _) = tok.kind {
@@ -61,8 +57,8 @@ fn main() {
 
     
 
-    new_formatted_error!(CouldNotCompile &filename).dispatch();
 
+    new_formatted_error!(CouldNotCompile &filename).dispatch();
 
 
     finish_lint();

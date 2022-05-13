@@ -55,7 +55,7 @@ impl Span {
 		let line = self.get_line();
 		if let None = line { return None; }
 
-		let end = self.start.column.unwrap_or(1) - 1;
+		let end = self.start.column.unwrap_or(1);
 
 		// unwrap line or return None
 		match line {
@@ -69,7 +69,7 @@ impl Span {
 		let line = self.get_line();
 		if let None = line { return None; }
 
-		let start = self.start.column.unwrap_or(1) + 1 + self.length;
+		let start = self.start.column.unwrap_or(1) + self.length;
 
 		// unwrap line or return None
 		match line {
@@ -83,7 +83,7 @@ impl Span {
 		let line = self.get_line();
 		if let None = line { return None; }
 
-		let start = self.start.column.unwrap_or(1) + 1;
+		let start = self.start.column.unwrap_or(1);
 		let end = start + self.length;
 
 		// unwrap line or return None

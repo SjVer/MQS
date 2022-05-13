@@ -1,10 +1,14 @@
-#[derive(Debug, Clone, PartialEq)]
+use num_enum::TryFromPrimitive;
+use convert_case::{Case, Casing};
+
+#[repr(i16)]
+#[derive(Debug, Clone, PartialEq, TryFromPrimitive)]
 pub enum ErrorCode {
-	_N = -100, // codes without code
+	_C = -100, // codes without code
 	CouldNotOpen,
 	CouldNotCompile,
 
-	None = 0,
+	NoError = 0,
 
 	_L = 100, // lexical-error codes
 	UnExpectedChar,
@@ -28,7 +32,25 @@ pub enum ErrorCode {
 
 impl ErrorCode {
 	pub fn is_useful(&self) -> bool {
-		self.clone() as i32 >= 0
+		self.clone() as i16 >= 0
+	}
+
+	pub fn get_name(&self) -> String {
+		format!("{:?}", self).to_case(Case::Lower)
+	}
+
+	pub fn get_type(&self) -> Option<&str> {
+		let rounded = (self.clone() as i16 as f32 / 100_f32).floor() * 100_f32;
+		match ErrorCode::try_from(rounded as i16) {
+			Err(_) => None,
+			Ok(c) => match c {
+				Self::_C => Some("codeless"),
+				Self::_L => Some("lexical"),
+				Self::_S => Some("syntax"),
+				Self::_D => Some("disassembly"),
+				_ => None
+			}
+		}
 	}
 }
 
@@ -37,7 +59,7 @@ macro_rules! fmt_error_msg {
 	(CouldNotOpen $file:expr, $why:expr) => (format!("could not open file '{}': {}", $file, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
 	
-	(None) => ("there is no error, why did this appear?");
+	(NoError) => ("there is no error, why did this appear?");
 
 	(UnExpectedChar $chr:expr) => (format!("unexpected character {:?}", $chr));
 	(InvalidDigit $chr:expr, $base:expr, $t:expr) => (format!("invalid digit {:?} in {} {}", $chr, $base, $t));
