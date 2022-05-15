@@ -58,6 +58,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb4a24b1aaf0fd0ce8b45161144d6f42cd91677fd5940fd431183eb023b3a2b8"
 
 [[package]]
+name = "eio"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f49f253efa8cf9ddc16a96a88c8fbea982282d0361a07375a1bfff7ad7a40b77"
+
+[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -97,6 +103,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "convert_case",
+ "eio",
  "json",
  "num_enum",
  "yansi",

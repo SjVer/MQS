@@ -23,7 +23,10 @@ pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 #[macro_export]
 macro_rules! new_formatted_error {
 	($code:ident $($arg:tt)*) => {
-		report::error(fmt_error_msg!($code $($arg)*), Some(report::code::ErrorCode::$code))
+		crate::report::error(
+			crate::fmt_error_msg!($code $($arg)*),
+			Some(crate::report::code::ErrorCode::$code)
+		)
 	};
 }
 

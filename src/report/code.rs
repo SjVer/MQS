@@ -25,6 +25,7 @@ pub enum ErrorCode {
 	_D = 300, // disassembly-error codes
 	MissingData,
 	InvalidData,
+	InvalidHeader,
 	InvalidIndex,
 	InvalidChecksum,
 	NonexistentString,
@@ -73,7 +74,8 @@ macro_rules! fmt_error_msg {
 
 	(MissingData) => ("missing data");
 	(InvalidData) => ("invalid data");
-	(InvalidIndex $of:expr) => ("invalid {} index", $of);
+	(InvalidHeader) => ("invalid header");
 	(InvalidChecksum) => ("invalid checksum");
+	(InvalidIndex $of:expr) => ("invalid {} index", $of);
 	(NonexistentString) => ("use of nonexistent string");
 }
