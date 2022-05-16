@@ -43,7 +43,7 @@ pub struct CliArgs {
 
 
     #[clap(long, help = cli::ARG_EXPLAIN)]
-    pub explain: Option<u8>,
+    pub explain: Option<u16>,
 }
 
 

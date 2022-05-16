@@ -1,12 +1,17 @@
 use num_enum::TryFromPrimitive;
 use convert_case::{Case, Casing};
 
+// pub trait Code {
+// 	fn to_string(&self) -> String;
+// }
+
 #[repr(i16)]
 #[derive(Debug, Clone, PartialEq, TryFromPrimitive)]
 pub enum ErrorCode {
 	_C = -100, // codes without code
 	CouldNotOpen,
 	CouldNotCompile,
+	InvalidStepNumber,
 
 	NoError = 0,
 
@@ -28,6 +33,7 @@ pub enum ErrorCode {
 	InvalidHeader,
 	InvalidIndex,
 	InvalidChecksum,
+	ExpectedNullByte,
 	NonexistentString,
 }
 
@@ -59,6 +65,7 @@ impl ErrorCode {
 macro_rules! fmt_error_msg {
 	(CouldNotOpen $file:expr, $why:expr) => (format!("could not open file '{}': {}", $file, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
+	(InvalidStepNumber $step:expr, $len:expr) => (format!("invalid step number '{}' not in range [1-{}]", $step, $len));
 	
 	(NoError) => ("there is no error, why did this appear?");
 
@@ -76,6 +83,7 @@ macro_rules! fmt_error_msg {
 	(InvalidData) => ("invalid data");
 	(InvalidHeader) => ("invalid header");
 	(InvalidChecksum) => ("invalid checksum");
-	(InvalidIndex $of:expr) => ("invalid {} index", $of);
+	(InvalidIndex $of:expr) => (format!("invalid {} index", $of));
+	(ExpectedNullByte) => ("expected null-byte");
 	(NonexistentString) => ("use of nonexistent string");
 }

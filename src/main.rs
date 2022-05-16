@@ -27,8 +27,10 @@ fn main() {
     // parse cli args
     cli::setup();
 
-    object::dis::Disassembler::new(get_cli_arg!(infile)).dis();
-    
+    let mut dis = object::dis::Disassembler::new(get_cli_arg!(infile));
+    dis.dis();
+    dis.questions[0].stringify(&dis.strings).print();
+    dis.questions[0].stringify(&dis.strings).print_at(1);
 
     // prepare_lint();
     

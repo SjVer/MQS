@@ -1,4 +1,4 @@
-use super::question::{SQuestion, StringCollection};
+use super::question::{IQuestion, IStep, StringCollection, StringIndex};
 
 use std::{io::{BufReader, Read}, fs::File};
 
@@ -15,8 +15,8 @@ pub struct Disassembler {
 	data: Vec<u8>,
 	bi: usize,
 
-	questions: Vec<SQuestion>,
-	strings: StringCollection,
+	pub questions: Vec<IQuestion>,
+	pub strings: StringCollection,
 }
 
 impl Disassembler {
@@ -78,6 +78,67 @@ impl Disassembler {
 			=> InvalidChecksum
 		);
 
-		// 
+		// info
+		let stris = read_as!(1, 1 => u8) as usize;
+		let qis = read_as!(1, 1 => u8) as usize;
+		let qcount = read_as!(qis, 8 => usize);
+
+		// questions
+		for qi in 0..qcount {
+			test_or_error!(read_as!(qis, 8 => usize) == qi => InvalidIndex "question");
+			
+			let name = read_as!(stris, 8 => StringIndex);
+			let theory = read_as!(stris, 8 => StringIndex);
+			
+			let sis = read_as!(1, 1 => u8) as usize;
+			let scount = read_as!(sis, 8 => usize);
+			let mut steps = Vec::<IStep>::new();
+			
+			// get all steps
+			for si in 0..scount {
+				test_or_error!(read_as!(sis, 8 => usize) == si => InvalidIndex "step");
+
+				steps.push(IStep{
+					description: read_as!(stris, 8 => StringIndex),
+					process: read_as!(stris, 8 => StringIndex),
+					state_before: read_as!(stris, 8 => StringIndex),
+					state_after: read_as!(stris, 8 => StringIndex),
+				});
+			}
+
+			// conclusion, etc..
+			let conclusion = read_as!(stris, 8 => StringIndex);
+			let answer = read_as!(stris, 8 => StringIndex);
+			let is_true = read_as!(1, 1 => u8) != 0;
+
+			let sts = read_as!(1, 1 => u8) as usize;
+			let steps_tried = read_as!(sts, 8 => u64);
+
+			// append question
+			self.questions.push(IQuestion{
+				name,
+				theory,
+				steps,
+				conclusion,
+				answer,
+				is_true,
+				steps_tried,
+			});
+		}
+	
+		// strings
+		while self.bi < self.data.len() {
+			test_or_error!(read_as!(1, 1 => u8) == 0 => ExpectedNullByte);
+			test_or_error!(read_as!(stris, 8 => StringIndex) == self.strings.len() => InvalidIndex "string");
+
+			let mut len = 0;
+			while self.bi + len < self.data.len() && self.data[self.bi + len] != 0 {
+				len += 1;
+			}
+
+			self.strings.push(String::from_utf8(self.data[self.bi..self.bi + len]
+				.to_vec()).unwrap_or(String::from("???")));
+			self.bi += len;
+		}
 	}
 }

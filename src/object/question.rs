@@ -1,21 +1,25 @@
+use crate::new_formatted_error;
+
 pub type StringCollection = Vec<String>;
 pub type StringIndex = usize;
 
+static TAB: &str = "    ";
+
 pub struct Step<T> {
-	description: T,
-	process: T,
-	state_before: T,
-	state_after: T,
+	pub description: T,
+	pub process: T,
+	pub state_before: T,
+	pub state_after: T,
 }
 
 pub struct Question<T> {
-	name: T,
-	theory: T,
-	steps: Vec<Step<T>>,
-	conclusion: T,
-	answer: T,
-	is_true: bool,
-	steps_tried: u32,
+	pub name: T,
+	pub theory: T,
+	pub steps: Vec<Step<T>>,
+	pub conclusion: T,
+	pub answer: T,
+	pub is_true: bool,
+	pub steps_tried: u64,
 }
 
 pub type IStep = Step<StringIndex>;
@@ -51,5 +55,43 @@ impl IQuestion {
 			is_true: self.is_true,
 			steps_tried: self.steps_tried,
 		}
+	}
+}
+
+impl SQuestion {
+	pub fn print(&self) {
+		println!("question: ?{}", self.name);
+		println!("{}theory: `{}`", TAB, self.theory);
+		println!("{}approach:", TAB);
+
+		for (i, s) in self.steps.iter().enumerate() {
+			println!("{}{}{}: {}", TAB, TAB, i + 1, s.description);
+			println!("{}{}{}`{}`", TAB, TAB, TAB, s.process);
+		}
+		
+		println!("{}{}{}", TAB, TAB, self.conclusion);
+		println!("{}answer: {} ({})", TAB, self.answer, self.is_true);
+		println!("{}steps tried: {}", TAB, self.steps_tried);
+	}
+
+	pub fn print_at(&self, step: usize) {
+		if step < 1 || step > self.steps.len() {
+			new_formatted_error!(InvalidStepNumber step, self.steps.len()).dispatch();
+			std::process::exit(1);
+		}
+
+		println!("question: ?{} (step {})", self.name, step);
+		println!("{}theory: `{}`", TAB, self.theory);
+
+		let step = &self.steps[step - 1];
+
+		println!("{}state before step:", TAB);
+		println!("{}{}`{}`", TAB, TAB, step.state_before);
+
+		println!("{}step: {}", TAB, step.description);
+		println!("{}{}{}", TAB, TAB, step.process);
+
+		println!("{}state after step:", TAB);
+		println!("{}{}`{}`", TAB, TAB, step.state_after);
 	}
 }

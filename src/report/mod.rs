@@ -6,8 +6,16 @@ use crate::info::report::*;
 use yansi::Color;
 
 pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
+	let label;
+	
+	if matches!(code, Some(_)) && matches!(code.as_ref().unwrap().get_type(), Some(_)) {
+		label = format!("{} {}", code.as_ref().unwrap().get_type().unwrap(), ERROR_LABEL);
+	} else {
+		label = String::from(ERROR_LABEL);
+	}
+
 	Report{
-		label: String::from(ERROR_LABEL),
+		label,
 		message: message.to_string(),
 
 		color: Color::Red,
