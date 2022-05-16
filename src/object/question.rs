@@ -77,7 +77,7 @@ impl SQuestion {
 	pub fn print_at(&self, step: usize) {
 		if step < 1 || step > self.steps.len() {
 			new_formatted_error!(InvalidStepNumber step, self.steps.len()).dispatch();
-			std::process::exit(1);
+			crate::exit(1);
 		}
 
 		println!("question: ?{} (step {})", self.name, step);

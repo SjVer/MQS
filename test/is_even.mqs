@@ -27,11 +27,11 @@ question to solve: ?double_is_even
 	
 1/1 answers are true
 	
-re-run with '--state=QUESTION:STEP' to see the
+re-run with '--at=QUESTION:STEP' to see the
 state of a question at the given step
 
 *--
---* OUTPUT WITH --state=double_is_even:2 : 
+--* OUTPUT WITH --at=double_is_even:2 : 
 
 question to solve: ?double_is_even
 	theory: `f(x) % 2`

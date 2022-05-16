@@ -1,12 +1,12 @@
 use super::question::{IQuestion, IStep, StringCollection, StringIndex};
 
-use std::{io::{BufReader, Read}, fs::File};
+use std::{io::{BufReader, Read}, fs::File, path::PathBuf};
 
 macro_rules! dis_error {
 	($code:ident $($arg:tt)*) => {
 		{
 			crate::new_formatted_error!($code $($arg)*).dispatch();
-			std::process::exit(1);
+			crate::exit(1);
 		}
 	};
 }
@@ -21,17 +21,17 @@ pub struct Disassembler {
 
 impl Disassembler {
 
-	pub fn new(file: String) -> Self {
+	pub fn new(path: PathBuf) -> Self {
 		let mut data = Vec::<u8>::new();
 
-		match File::open(&file) {
+		match File::open(&path) {
 			Ok(f) => {
 				match BufReader::new(f).read_to_end(&mut data) {
 					Ok(_) => (),
-					Err(e) => dis_error!(CouldNotOpen file, e.kind())
+					Err(e) => dis_error!(CouldNotOpen path.display(), e.kind())
 				}
 			},
-			Err(e) => { dis_error!(CouldNotOpen file, e.kind()); }
+			Err(e) => { dis_error!(CouldNotOpen path.display(), e.kind()); }
 		};
 
 		Self {

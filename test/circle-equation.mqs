@@ -52,8 +52,4 @@ question to solve: ?0
 	steps tried: 10023
 	
 1/1 answers are true
-	
-re-run with '--state=QUESTION:STEP' to see the
-state of a question at the given step
-
 *--

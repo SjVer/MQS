@@ -1,4 +1,2 @@
 -- simple formula
 @f(x: int): int := 2 x
-
-f'(x)

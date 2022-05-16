@@ -1,7 +1,6 @@
 use crate::info::cli;
 use clap::{Parser, ArgEnum, AppSettings::DeriveDisplayOrder};
-use crate::report::code::ErrorCode;
-use std::io::{Write, stderr};
+pub use clap::error as claperr;
 
 pub static mut CLI_ARGS: Option<CliArgs> = None;
 
@@ -30,13 +29,27 @@ macro_rules! lint_mode_is {
 pub struct CliArgs {
 
     #[clap(help = cli::ARG_INFILE)]
-    pub infile: String,
+    pub infile: Option<String>,
+
+    
+    #[clap(short, long, help = cli::ARG_REVIEW)]
+    pub review: bool,
+    
+    #[clap(short, long, help = cli::ARG_DIS, value_name = "OBJFILE")]
+    pub dis: Option<String>,
+
+    #[clap(short, long, help = cli::ARG_AT, value_name = "QUESTION[:STEP]")]
+    pub at: Option<String>,
+
+
 
     #[clap(short, long, help = cli::ARG_COMPACT)]
     pub compact: bool,
 
     #[clap(short, long, help = cli::ARG_QUIET)]
     pub quiet: bool,
+
+
 
     #[clap(long)]
     pub lint: Option<LintMode>,
@@ -54,15 +67,13 @@ pub enum LintMode {
 }
 
 impl std::str::FromStr for LintMode {
-    type Err = clap::Error;
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             cli::LINT_NONE_NAME => Ok(LintMode::None),
             cli::LINT_DIAG_NAME => Ok(LintMode::Diag),
-            _ => Err(
-                clap::Error::raw(clap::ErrorKind::InvalidValue,
-                "invalid lint mode")),
+            _ => Err("invalid lint mode"),
         }
     }
 }
@@ -79,25 +90,4 @@ impl std::fmt::Display for LintMode {
 
 pub fn setup() {
     unsafe { CLI_ARGS = Some(CliArgs::parse()); }
-    
-    if let Some(code) = get_cli_arg!(explain) {
-        // explain error
-        match ErrorCode::try_from(code as i16) {
-            Ok(e) => {
-                let t = match e.get_type() {
-                    Some(t) => format!(" ({} error)", t),
-                    None => String::new()
-                };
-
-                println!("error code E{}: {}{}", code, e.get_name(), t);
-                std::process::exit(0);
-            },
-            Err(_) => {
-                writeln!(stderr(), "cannot explain invalid error code {:?}", code)
-                    .unwrap();
-                std::process::exit(1);
-            },
-        }
-
-    }
 }

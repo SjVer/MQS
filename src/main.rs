@@ -6,10 +6,19 @@ pub mod runtime;
 pub mod cli;
 pub mod info;
 
-use lex::{Lexer, token::TokenKind};
-use cli::{CLI_ARGS, LintMode};
-use std::fs::read_to_string;
+use lex::Lexer;
+use parse::Parser; 
+use object::{obj_filename, dis::Disassembler};
+use report::code::ErrorCode;
+use cli::{CLI_ARGS, LintMode, claperr};
 
+use std::{io::{Write, stderr}, fs::read_to_string, path::PathBuf};
+use regex::Regex;
+
+pub fn exit(code: i32) {
+    finish_lint();
+    std::process::exit(code);
+}
 
 fn prepare_lint() {
     if lint_mode_is!(Diag) {
@@ -23,51 +32,125 @@ fn finish_lint() {
     }
 }
 
+
+fn do_review(objfile: PathBuf, error: report::Report) {
+    // let filename = get_cli_arg!(infile).unwrap();
+    // let objfile = obj_filename(filename.clone());
+
+    if !objfile.exists() {
+        error.dispatch();
+        exit(1);
+    }
+
+    let mut dis = Disassembler::new(objfile);
+    dis.dis();
+
+    // check and parse --at option
+    if let Some(at) = get_cli_arg!(at) {
+        let re = Regex::new("^([a-zA-Z_][a-zA-Z0-9_]*'*)(?::([0-9]+))?$").unwrap();
+        
+        if !re.is_match(&at) {
+            // invalid value
+            clap::Error::raw(clap::ErrorKind::InvalidValue, "value does not match 'QUESTION[:STEP]'")
+                .print().unwrap();
+            writeln!(stderr(), "\n\nFor more information try --help").unwrap();
+            exit(1);
+        }
+        let c = re.captures(&at).unwrap();
+        
+        // find question
+        let mut question: i32 = -1;
+        for i in 0..dis.questions.len() {
+            if dis.strings[dis.questions[i].name] == c[1].to_string() {
+                question = i as i32;
+                break;
+            }
+        }
+        if question == -1 {
+            new_formatted_error!(CannotReview "uninterpreted question", &c[1]).dispatch();
+            exit(1);
+        }
+        
+        let question = dis.questions[question as usize].stringify(&dis.strings);
+        if c.get(2).is_some() {
+            question.print_at(c[2].parse().unwrap())
+        } else {
+            question.print();
+        }
+        
+    } else {
+        let mut true_count = 0;
+
+        for q in &dis.questions {
+            q.stringify(&dis.strings).print();
+            true_count += q.is_true as i32;
+            println!("");
+        }
+
+        println!("{}/{} answers are true", true_count, dis.questions.len());
+    }
+}
+
+fn do_file() {
+    let filename = get_cli_arg!(infile).unwrap();
+    let src = match read_to_string(&filename) {
+        Ok(text) => text,
+        Err(e) => {
+            new_formatted_error!(CouldNotOpen &filename, e.kind())
+                .dispatch();
+            std::process::exit(e.raw_os_error().unwrap());
+        }
+    };
+
+    let src = SOURCES!().new_source(filename.clone(), src);
+    let lexer = Lexer::new(filename.clone(), src);
+    Parser::new(lexer).parse();
+
+    new_formatted_error!(CouldNotCompile &filename).dispatch();
+}
+
+
 fn main() {
     // parse cli args
     cli::setup();
+    prepare_lint();
 
-    let mut dis = object::dis::Disassembler::new(get_cli_arg!(infile));
-    dis.dis();
-    dis.questions[0].stringify(&dis.strings).print();
-    dis.questions[0].stringify(&dis.strings).print_at(1);
+    if let Some(code) = get_cli_arg!(explain) {
+        // explain error
+        match ErrorCode::try_from(code as i16) {
+            Ok(e) => {
+                let t = match e.get_type() {
+                    Some(t) => format!(" ({} error)", t),
+                    None => String::new()
+                };
 
-    // prepare_lint();
-    
-    // let filename = get_cli_arg!(infile);
-    // let src = match read_to_string(&filename) {
-    //     Ok(text) => text,
-    //     Err(e) => {
-    //         new_formatted_error!(CouldNotOpen &filename, e.kind())
-    //             .dispatch();
-    //         std::process::exit(e.raw_os_error().unwrap());
-    //     }
-    // };
+                println!("error code E{}: {}{}", code, e.get_name(), t);
+            },
+            Err(_) => {
+                new_formatted_error!(CannotExplainCode code).dispatch();
+                exit(1);
+            },
+        }
+    }
+    else if let Some(path) = get_cli_arg!(dis) {
+        let error = new_formatted_error!(CannotReview "nonexistent object file", path);
+        do_review(PathBuf::from(&path), error);
+    }
+    else {
+        if let None = get_cli_arg!(infile) {
+            claperr::Error::raw(claperr::ErrorKind::MissingRequiredArgument, "missing required argument INFILE")
+                .print().unwrap();
+            writeln!(stderr(), "\n\nFor more information try --help").unwrap();
+            exit(1);
+        }
 
-    // let src = SOURCES!().new_source(filename.clone(), src);
-    
-    // let mut lex = Lexer::new(filename.clone(), src);
-    // let mut tok = lex.next();
+        if get_cli_arg!(review) {
+            let filename = get_cli_arg!(infile).unwrap();
+            let objpath = obj_filename(filename.clone());
+            do_review(objpath, new_formatted_error!(CannotReview "uninterpreted file", filename));
+        }
+        else { do_file(); }
+    }
 
-    // loop {
-    //     println!("{} => {:?}", tok.span.start.to_string(), tok.kind);
-
-    //     if tok.kind == TokenKind::EOF { break; }
-
-    //     else if let TokenKind::Error(code, msg, _) = tok.kind {
-    //         report::error(msg, Some(code))
-    //             .with_quote(tok.span, None::<String>)
-    //             .dispatch();
-    //     }
-
-    //     tok = lex.next();
-    // }
-
-    
-
-
-    // new_formatted_error!(CouldNotCompile &filename).dispatch();
-
-
-    // finish_lint();
+    finish_lint();
 }

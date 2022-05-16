@@ -55,7 +55,7 @@
         <array>
           <dict>
             <key>match</key>
-            <string>([A-Za-z_][A-Za-z_0-9]*)(?:\s*(:)\s*(?:(nat|int|flt)|(\S*)))?</string>
+            <string>([A-Za-z_][A-Za-z_0-9]*'*)(?:\s*(:)\s*(?:(nat|int|flt)|(\S*)))?</string>
             <key>captures</key>
             <dict>
               <key>1</key>
@@ -105,7 +105,7 @@
       <key>namespace</key>
       <dict>
         <key>begin</key>
-        <string>([A-Za-z_][A-Za-z_0-9]*)\s*(\{)</string>
+        <string>([A-Za-z_][A-Za-z_0-9]*'*)\s*(\{)</string>
         <key>beginCaptures</key>
         <dict>
           <key>1</key>
@@ -186,7 +186,7 @@
       <key>import</key>
       <dict>
         <key>match</key>
-        <string>(#)\s*((?:[A-Za-z_][A-Za-z_0-9]*\s*\/\s*)*(?:[A-Za-z_][A-Za-z_0-9]*))</string>
+        <string>(#)\s*((?:[A-Za-z_][A-Za-z_0-9]*'*\s*\/\s*)*(?:[A-Za-z_][A-Za-z_0-9]*'*))</string>
         <key>captures</key>
         <dict>
           <key>1</key>
@@ -204,7 +204,7 @@
       <key>theorem-decl</key>
       <dict>
         <key>begin</key>
-        <string>(!)\s*(?:([A-Za-z_][A-Za-z_0-9]*)|(\S*))\s*</string>
+        <string>(!)\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)|(\S*))\s*</string>
         <key>beginCaptures</key>
         <dict>
           <key>1</key>
@@ -248,7 +248,7 @@
       <key>conclusion-decl</key>
       <dict>
         <key>begin</key>
-        <string>(&amp;)\s*(?:([A-Za-z_][A-Za-z_0-9]*)|(\S*))\s*</string>
+        <string>(&amp;)\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)|(\S*))\s*</string>
         <key>beginCaptures</key>
         <dict>
           <key>1</key>
@@ -302,7 +302,7 @@
       <key>variable-decl</key>
       <dict>
         <key>match</key>
-        <string>(\$)\s*(?:([A-Za-z_][A-Za-z_0-9]*)|(\S*))\s*(:=)</string>
+        <string>(\$)\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)|(\S*))\s*(:=)</string>
         <key>captures</key>
         <dict>
           <key>1</key>
@@ -330,7 +330,7 @@
       <key>function-decl</key>
       <dict>
         <key>begin</key>
-        <string>(@)\s*(?:([A-Za-z_][A-Za-z_0-9]*)|(\S*))\s*</string>
+        <string>(@)\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)|(\S*))\s*</string>
         <key>beginCaptures</key>
         <dict>
           <key>1</key>
@@ -389,7 +389,7 @@
       <key>question-decl</key>
       <dict>
         <key>begin</key>
-        <string>(\?)\s*(?:([A-Za-z_][A-Za-z_0-9]*)\s*)?</string>
+        <string>(\?)\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)\s*)?</string>
         <key>beginCaptures</key>
         <dict>
           <key>1</key>
@@ -538,7 +538,7 @@
         <array>
           <dict>
             <key>begin</key>
-            <string>([A-Za-z_][A-Za-z_0-9]*)\s*(\()</string>
+            <string>([A-Za-z_][A-Za-z_0-9]*'*)\s*(\()</string>
             <key>beginCaptures</key>
             <dict>
               <key>1</key>
@@ -586,7 +586,7 @@
           </dict>
           <dict>
             <key>match</key>
-            <string>[A-Za-z_][A-Za-z_0-9]*</string>
+            <string>[A-Za-z_][A-Za-z_0-9]*'*</string>
             <key>scope</key>
             <string>variable.mqs</string>
           </dict>

@@ -1,7 +1,8 @@
 mod report;
 pub mod code;
 
-use report::{Report, Severity};
+pub use report::Report;
+use report::Severity;
 use crate::info::report::*;
 use yansi::Color;
 

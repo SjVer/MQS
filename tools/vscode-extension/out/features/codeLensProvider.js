@@ -37,40 +37,22 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.MQSCodeLensProvider = void 0;
-var crypto_1 = require("crypto");
-var vscode_1 = require("vscode");
-var resultDatabase_1 = require("./resultDatabase");
 var questionRegex = /(?:^|\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm;
 var commentStartRegex = /--\*(?!.*\*--)/gm;
 var commentEndRegex = /\*--/gm;
 function createMQSSolveCommand(uri, name) {
-    var result = {
-        key: { uri: uri, name: name },
-        value: { correct: (0, crypto_1.randomInt)(2) == 0 }
-    };
     return {
         title: "Solve question",
         tooltip: "Solve question \"?".concat(name, "\""),
-        command: 'mqs.setResult',
-        arguments: [result]
+        command: 'mqs.solveQuestion',
+        arguments: [uri, name]
     };
 }
-;
-function createMQSReviewCommand(uri, name) {
-    var result = (0, resultDatabase_1.getMQSResult)({ uri: uri, name: name });
+function createMQSReviewCommand(uri, name, correct) {
     return {
-        title: "Review result (".concat(result.correct ? "correct" : "incorrect", ")"),
+        title: "Review result (".concat(correct ? "correct" : "incorrect", ")"),
         tooltip: "Review the result of question \"?".concat(name, "\""),
         command: null
-    };
-}
-;
-function createRenameCommand(name, range) {
-    return {
-        title: "Rename (question already exists)",
-        command: "mqs.renameQuestion",
-        arguments: [vscode_1.window.activeTextEditor, name, range],
-        tooltip: "Rename the question to \"".concat(name, "1\"")
     };
 }
 var MQSCodeLensProvider = /** @class */ (function () {
@@ -78,26 +60,16 @@ var MQSCodeLensProvider = /** @class */ (function () {
     }
     MQSCodeLensProvider.prototype.provideCodeLenses = function (document) {
         return __awaiter(this, void 0, void 0, function () {
-            var lenses, unnamedQuestionsCount, questionNames, inComment, ln, line, match, name;
+            var lenses, unnamedQuestionsCount, inComment, ln, line, match, name;
             return __generator(this, function (_a) {
                 lenses = [];
                 unnamedQuestionsCount = 0;
-                questionNames = [];
                 inComment = false;
                 for (ln = 0; ln < document.lineCount; ln++) {
                     line = document.lineAt(ln);
                     if (!inComment && questionRegex.test(line.text)) {
-                        match = /\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm.exec(line.text);
+                        match = /(?!\-\-\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm.exec(line.text);
                         name = match[1] ? match[1] : (unnamedQuestionsCount++).toString();
-                        // push duplicate name codelens?
-                        if (questionNames.includes(name)) {
-                            lenses.push({
-                                isResolved: true,
-                                range: line.range,
-                                command: createRenameCommand(name, line.range)
-                            });
-                            continue;
-                        }
                         // push solve codelens
                         lenses.push({
                             isResolved: true,
@@ -105,14 +77,11 @@ var MQSCodeLensProvider = /** @class */ (function () {
                             command: createMQSSolveCommand(document.uri, name)
                         });
                         // push review result codelens
-                        if ((0, resultDatabase_1.getMQSResult)({ uri: document.uri, name: name }))
-                            lenses.push({
-                                isResolved: true,
-                                range: line.range,
-                                command: createMQSReviewCommand(document.uri, name)
-                            });
-                        ln--;
-                        questionNames.push(name);
+                        lenses.push({
+                            isResolved: false,
+                            range: line.range
+                        });
+                        ln--; // idk why but it'll skip the next line if ln isn't decremented
                     }
                     if (commentStartRegex.test(line.text))
                         inComment = true;
@@ -122,6 +91,10 @@ var MQSCodeLensProvider = /** @class */ (function () {
                 return [2 /*return*/, lenses];
             });
         });
+    };
+    MQSCodeLensProvider.prototype.resolveCodeLens = function (lens, token) {
+        if (lens.isResolved)
+            return null;
     };
     return MQSCodeLensProvider;
 }());

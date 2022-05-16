@@ -11,6 +11,8 @@ pub enum ErrorCode {
 	_C = -100, // codes without code
 	CouldNotOpen,
 	CouldNotCompile,
+	CannotExplainCode,
+	CannotReview,
 	InvalidStepNumber,
 
 	NoError = 0,
@@ -51,7 +53,7 @@ impl ErrorCode {
 		match ErrorCode::try_from(rounded as i16) {
 			Err(_) => None,
 			Ok(c) => match c {
-				Self::_C => Some("codeless"),
+				Self::_C => None,
 				Self::_L => Some("lexical"),
 				Self::_S => Some("syntax"),
 				Self::_D => Some("disassembly"),
@@ -65,6 +67,8 @@ impl ErrorCode {
 macro_rules! fmt_error_msg {
 	(CouldNotOpen $file:expr, $why:expr) => (format!("could not open file '{}': {}", $file, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
+	(CannotExplainCode $code:expr) => (format!("cannot explain invalid error code {:?}", $code));
+	(CannotReview $what:expr, $name:expr) => (format!("cannot review {} '{}'", $what, $name));
 	(InvalidStepNumber $step:expr, $len:expr) => (format!("invalid step number '{}' not in range [1-{}]", $step, $len));
 	
 	(NoError) => ("there is no error, why did this appear?");

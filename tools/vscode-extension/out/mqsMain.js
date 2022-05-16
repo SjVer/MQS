@@ -4,9 +4,6 @@ exports.activate = void 0;
 var vscode = require("vscode");
 var child_process_1 = require("child_process");
 var cmd = require("./features/commands");
-// import { Disposable, languages, Range, TextEditor } from 'vscode';
-// import { MQSResult, setMQSResult } from './features/resultDatabase';
-// import { MQSCodeLensProvider } from "./features/codeLensProvider";
 function activate(context) {
     if (!vscode.workspace.getConfiguration("mqs").get("enableLanguageFeatures"))
         return;
@@ -20,9 +17,8 @@ function activate(context) {
     statusbarItem.text = output.replace("mqs ", "MQS: ");
     statusbarItem.show();
     // set commands for codelens
-    context.subscriptions.push(vscode.commands.registerCommand("mqs.setResult", cmd.setMQSResultCallback));
+    context.subscriptions.push(vscode.commands.registerCommand("mqs.solveQuestion", cmd.solveQuestionCallback));
     context.subscriptions.push(vscode.commands.registerCommand("mqs.refreshCodeLens", cmd.refreshCodeLensCallback));
-    context.subscriptions.push(vscode.commands.registerCommand("mqs.renameQuestion", cmd.renameQuestionCallback));
     // set and subscribe codelens
     cmd.refreshCodeLensCallback();
     context.subscriptions.push(cmd.codelensDisposable);

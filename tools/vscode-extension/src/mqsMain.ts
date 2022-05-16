@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
 import { execSync } from "child_process";
 import * as cmd from './features/commands';
-// import { Disposable, languages, Range, TextEditor } from 'vscode';
-// import { MQSResult, setMQSResult } from './features/resultDatabase';
-// import { MQSCodeLensProvider } from "./features/codeLensProvider";
 
 export function activate(context: vscode.ExtensionContext): any {
 	if(!vscode.workspace.getConfiguration("mqs").get<boolean>("enableLanguageFeatures")) return;
@@ -17,10 +14,8 @@ export function activate(context: vscode.ExtensionContext): any {
 	statusbarItem.show();
 
 	// set commands for codelens
-	context.subscriptions.push(vscode.commands.registerCommand("mqs.setResult", cmd.setMQSResultCallback));
+	context.subscriptions.push(vscode.commands.registerCommand("mqs.solveQuestion", cmd.solveQuestionCallback));
 	context.subscriptions.push(vscode.commands.registerCommand("mqs.refreshCodeLens", cmd.refreshCodeLensCallback));
-	context.subscriptions.push(vscode.commands.registerCommand("mqs.renameQuestion", cmd.renameQuestionCallback));
-	context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(cmd.textChangedCallback));
 
 	// set and subscribe codelens
 	cmd.refreshCodeLensCallback();

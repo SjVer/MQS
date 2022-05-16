@@ -15,6 +15,9 @@ pub mod app {
 pub mod cli {
 	static_string!(DESCRIPTION, "The Official MQS Interpreter - written by Sjoerd Vermeulen");
 	static_string!(ARG_INFILE, "The file to interpret");
+	static_string!(ARG_REVIEW, "Review INFILE's last results");
+	static_string!(ARG_DIS, "Disassemble MQS object file OBJFILE");
+	static_string!(ARG_AT, "Review the given question (at a given step)");
 	static_string!(ARG_COMPACT, "Produce compact output");
 	static_string!(ARG_QUIET, "Hide all output");
 	static_string!(ARG_EXPLAIN, "Explain the given error code");
