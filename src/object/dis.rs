@@ -73,9 +73,11 @@ impl Disassembler {
 
 		// checksum
 		let css = read_as!(1, 1 => u8) as usize;
-		println!("{:?}", read_as!(css, 8 => u64));
+		test_or_error!(
+			read_as!(css, 8 => u64) == self.data[self.bi..].iter().map(|x| *x as u64).sum::<u64>()
+			=> InvalidChecksum
+		);
 
-		let cs: u64 = self.data[self.bi..].iter().sum();
-		println!("{:?}", cs);
+		// 
 	}
 }
