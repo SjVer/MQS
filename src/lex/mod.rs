@@ -9,6 +9,8 @@ use crate::{fmt_error_msg, deref_source};
 use crate::report::code::ErrorCode;
 use crate::runtime::types::Type;
 
+pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
+
 pub struct Lexer {
 	source: *const Source,
 	start_offset: usize,
@@ -37,7 +39,7 @@ macro_rules! formatted_error_token {
 	};
 }
 
-// private stuff
+// private token stuff
 impl Lexer {
 
 	fn at_end(&self) -> bool {
@@ -50,10 +52,12 @@ impl Lexer {
 		self.current_offset += 1;
 		deref_source!(self).at(self.current_offset - 1)
 	}
+
 	fn peek(&self) -> char {
 		// return current char
 		deref_source!(self).at(self.current_offset)
 	}
+
 	fn peek_at(&self, offset: usize) -> char {
 		//
 		deref_source!(self).at(self.current_offset + offset)
@@ -75,15 +79,16 @@ impl Lexer {
 			}
 		}
 	}
-	fn error_token(&self, code: ErrorCode, message: impl ToString, kind: Option<TokenKind>) -> Token {
-		let kind = match kind {
-			Some(kind) => Some(Box::new(kind)),
+
+	fn error_token(&self, code: ErrorCode, message: impl ToString, kind: Option<TokenType>) -> Token {
+		let faketok = match kind {
+			Some(kind) => Some(Box::new(self.make_token(kind))),
 			None => None,
 		};
 		let length = self.current_offset - self.start_offset;
 
 		Token {
-			kind: Error(code, message.to_string(), kind),
+			kind: Error(code, message.to_string(), faketok),
 			span: Span {
 				start: Location {
 					file: self.filename.clone(),
@@ -95,7 +100,9 @@ impl Lexer {
 			}
 		}
 	}
+}
 
+impl Lexer {
 	fn identifier(&mut self) -> Token {
 		while self.peek().is_alphanumeric() || self.peek() == '_' { self.advance(); }
 		while self.peek() == '\'' { self.advance(); }
@@ -108,6 +115,7 @@ impl Lexer {
 			None => self.make_token(Identifier),
 		}
 	}
+
 	fn number(&mut self, first: char) -> Token {
 		let base = match (first, self.peek()) {
 			('0', 'b' | 'B') => { self.advance(); 2 },
@@ -208,7 +216,7 @@ impl Lexer {
 		}
 	}
 
-	pub fn next(&mut self) -> Token {
+	fn next(&mut self) -> Token {
 		self.skip_ignored();
 
 		self.start_offset = self.current_offset;
@@ -246,5 +254,15 @@ impl Lexer {
 		}
 		
 		formatted_error_token!(self UnexpectedChar c)
+	}
+
+	pub fn lex(&mut self) -> TokenIter {
+		let mut tokens = Vec::<Token>::new();
+
+		while tokens.last().unwrap().kind != EOF {
+			tokens.push(self.next());
+		}
+
+		tokens.iter()
 	}
 }

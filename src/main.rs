@@ -103,8 +103,8 @@ fn do_file() {
     };
 
     let src = SOURCES!().new_source(filename.clone(), src);
-    let lexer = Lexer::new(filename.clone(), src);
-    Parser::new(lexer).parse();
+    let tokens = Lexer::new(filename.clone(), src).lex();
+    Parser::new().parse(tokens);
 
     new_formatted_error!(CouldNotCompile &filename).dispatch();
 }

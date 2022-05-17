@@ -1,6 +1,7 @@
 use crate::deref_source;
 use super::source::Source;
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Location {
 	pub file: String,
 	pub line: Option<usize>,
@@ -26,6 +27,7 @@ impl Location {
 	}
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Span {
 	pub start: Location,
 	pub length: usize,

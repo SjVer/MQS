@@ -1,104 +1,84 @@
 pub mod ast;
 pub mod context;
 
-use crate::lex::{Lexer, token::*};
-use crate::report::code::ErrorCode;
-use crate::report::{error, Report};
+use crate::lex::{Lexer, TokenIter, token::*};
+// use crate::report::code::ErrorCode;
+// use crate::report::{error, Report};
 pub use context::Context;
 
-pub struct Parser {
+pub struct Parser<'a> {
 	context: Context,
 
 	had_error: bool,
 	panic_mode: bool,
 
-	lexer: Lexer,
-	next_token: Token,
-	current_token: Token,
-}
-
-macro_rules! err {
-	($self:ident $fn:ident $($farg:expr)* => $code:ident $($earg:tt)*) => {
-		$self.$fn($($farg)* crate::fmt_error_msg!($code $($earg)*), Some(ErrorCode::$code))
-	};
-}
-
-// error stuff
-impl Parser {
-	fn error_at(&mut self, token: &Token, msg: impl ToString, code: Option<ErrorCode>) -> Report {
-		self.had_error = true;
-		self.panic_mode = true;
-
-		error(msg, code)
-			.with_quote(token.span, None::<String>)
-	}
-
-	// displays an error at the current token with the given message
-	fn error(&mut self, msg: impl ToString, code: Option<ErrorCode>) -> Report {
-		//
-		self.error_at(&self.current_token, msg, code)
-	}
-
-	// displays an error at the next token with the given message
-	fn error_at_next(&mut self, msg: impl ToString, code: Option<ErrorCode>) -> Report {
-		//
-		self.error_at(&self.next_token, msg, code)
-	}
+	tokens: TokenIter<'a>,
 }
 
 // token stuff
-impl Parser {
-	fn advance(&mut self) {
-		self.current_token = self.next_token;
+impl Parser<'_> {
+	fn matches(&mut self, kinds: &[TokenKind]) -> bool {
+        for kind in kinds {
+            if self.check(kind) {
+                self.advance();
+                return true;
+            }
+        }
+        false
+    }
 
-		loop {
-			self.current_token = self.lexer.next();
+    fn consume(&mut self, type_: &TokenType, message: &str) -> Result<Token> {
+        if self.check(type_) {
+            Ok(self.advance())
+        } else {
+            crate::error_at_token(&self.peek(), message);
+            Err(anyhow!("Parse error"))
+        }
+    }
 
-			if let TokenKind::Error(c, m, _) = &self.current_token.kind {
-				error(m, Some(*c))
-					.with_quote(self.current_token.span, None::<String>)
-					.dispatch();
-			}
-			else { break; }
-		}
-	}
+    fn check(&self, type_: &TokenType) -> bool {
+        if self.is_at_end() {
+            false
+        } else {
+            &self.peek().type_ == type_
+        }
+    }
 
-	fn check(&self, kind: TokenKind) -> bool {
-		self.current_token.kind == kind
-	}
+    fn advance(&mut self) -> Token {
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
+    }
 
-	fn consume(&mut self, what: impl ToString, kind: TokenKind, msg: impl ToString) -> bool {
-		if self.current_token.kind == kind {
-			self.advance();
-			true
-		} else {
-			err!(self error_at_next => ExpectedToken what.to_string());
-			false
-		}
-	}
-}
+    fn is_at_end(&self) -> bool {
+        self.peek().type_ == Eof
+    }
 
-// top-level
-impl Parser {
+    fn peek(&self) -> Token {
+        self.tokens[self.current].clone()
+    }
+
+    fn previous(&self) -> Token {
+        self.tokens[self.current - 1].clone()
+    }
 }
 
 // public stuff
-impl Parser {
-	pub fn new(lexer: Lexer) -> Self {
+impl Parser<'_> {
+	pub fn new() -> Self {
 		Self {
-			lexer,
 			context: Context::new(),
-
 			had_error: false,
 			panic_mode: false,
-
-			current_token: Token::empty(),
-			next_token: Token::empty()}
+			tokens: vec![].iter(),
 		}
 	}
 
-	pub fn parse(&mut self) -> Context {
-		while 
+	pub fn parse(&mut self, tokens: TokenIter) -> Context {
+
+		self.advance();
+		
 		
 		// return context
 		self.context.clone()

@@ -1,2 +1,1 @@
--- simple formula
-@f(x: int): int := 2 x
+1 + 2 * 3

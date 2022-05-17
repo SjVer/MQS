@@ -1,7 +1,7 @@
 use super::span::Span;
 use crate::report::code::ErrorCode;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TokenKind {
 	// definition
 	Conclusion,
@@ -41,7 +41,7 @@ pub enum TokenKind {
 	// misc.
 	Newline,
 	EOF,
-	Error(ErrorCode, String, Option<Box<TokenKind>>),
+	Error(ErrorCode, String, Option<Box<Token>>),
 }
 
 macro_rules! __somestr {
@@ -54,7 +54,7 @@ macro_rules! __somekind {
 	};
 }
 
-impl TokenKind {
+impl TokenType {
 	pub fn from_chars(c1: char, c2: char) -> Option<Self> {
 		match (c1, c2) {
 
@@ -97,6 +97,7 @@ impl TokenKind {
 	}
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Token {
 	pub kind: TokenKind,
 	pub span: Span
