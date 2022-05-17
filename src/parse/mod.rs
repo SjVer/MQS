@@ -1,25 +1,91 @@
 pub mod ast;
+pub mod astprinter;
 pub mod context;
-
-use crate::lex::{Lexer, TokenIter, token::*};
-// use crate::report::code::ErrorCode;
-// use crate::report::{error, Report};
+use self::ast::{ASTNode, ASTItem, Literal};
+use crate::{
+	report::{error, Report},
+	lex::token::{*, TokenKind::*},
+	new_formatted_error
+};
 pub use context::Context;
 
-pub struct Parser<'a> {
+type PResult<T> = Result<T, Report>;
+
+pub struct Parser {
 	context: Context,
 
-	had_error: bool,
-	panic_mode: bool,
+	// had_error: bool,
+	// panic_mode: bool,
 
-	tokens: TokenIter<'a>,
+	next_token: usize,
+	tokens: Vec<Token>,
 }
 
+macro_rules! current_span {
+	($self:ident) => ($self.current().span.clone());
+}
+macro_rules! b {
+	($what:expr) => (Box::new($what));
+}
+macro_rules! new_node {
+	($tok:expr => $kind:ident @s $($field:tt)*) => {
+		ASTNode { token: $tok, item: ASTItem::$kind { $($field)* } }
+	};
+	($tok:expr => $kind:ident @t $($field:tt)*) => {
+		ASTNode { token: $tok, item: ASTItem::$kind ( $($field)* ) }
+	};
+}
+/*
+// error stuff
+// impl Parser {
+// 	fn error(&mut self, report: Report) {
+// 		if self.panic_mode { return; }
+//
+// 		self.had_error = true;
+// 		self.panic_mode = true;
+//
+// 		report.dispatch();
+// 	}
+// }
+
+macro_rules! error {
+	($self:ident @none $code:ident $($arg:tt)*) => {
+		Err(
+			new_formatted_error!($code $($arg)*)
+		)
+	};
+	($self:ident @current $code:ident $($arg:tt)*) => {
+		Err(
+			new_formatted_error!($code $($arg)*)
+				.with_quote($self.current().span, None::<String>)
+		)
+	};
+	($self:ident @current $code:ident $($arg:tt)* => $msg:expr) => {
+		Err(
+			new_formatted_error!($code $($arg)*)
+				.with_quote($self.current().span, Some($msg))
+		)
+	};
+	($self:ident @next $code:ident $($arg:tt)*) => {
+		Err(
+			new_formatted_error!($code $($arg)*)
+				.with_quote($self.peek().span, None::<String>)
+		)
+	};
+	($self:ident @next $code:ident $($arg:expr)* => $msg:expr) => {
+		Err(
+			new_formatted_error!($code $($arg)*)
+				.with_quote($self.peek().span, Some($msg))
+		)
+	};
+}
+*/
+
 // token stuff
-impl Parser<'_> {
+impl Parser {
 	fn matches(&mut self, kinds: &[TokenKind]) -> bool {
         for kind in kinds {
-            if self.check(kind) {
+            if self.check(kind.clone()) {
                 self.advance();
                 return true;
             }
@@ -27,58 +93,181 @@ impl Parser<'_> {
         false
     }
 
-    fn consume(&mut self, type_: &TokenType, message: &str) -> Result<Token> {
-        if self.check(type_) {
+    fn consume(&mut self, kind: TokenKind, what: impl ToString) -> PResult<Token> {
+        if self.check(kind) {
             Ok(self.advance())
         } else {
-            crate::error_at_token(&self.peek(), message);
-            Err(anyhow!("Parse error"))
+			Err(new_formatted_error!(ExpectedToken what.to_string())
+				.with_quote(current_span!(self), Some("unexpected token here"))
+			)
         }
     }
 
-    fn check(&self, type_: &TokenType) -> bool {
+    fn check(&mut self, kind: TokenKind) -> bool {
         if self.is_at_end() {
             false
         } else {
-            &self.peek().type_ == type_
+            self.peek().kind == kind
         }
     }
 
     fn advance(&mut self) -> Token {
         if !self.is_at_end() {
-            self.current += 1;
-        }
-        self.previous()
+			self.next_token += 1;
+
+			if let Error(code, msg, fake) = self.peek().kind {
+				error(msg, Some(code))
+					.with_quote(self.peek().span, None::<String>)
+					.dispatch();
+				
+				if let Some(fake) = fake {
+					self.tokens[self.next_token] = *fake;
+				}
+			}
+		}
+
+		self.current()
     }
 
-    fn is_at_end(&self) -> bool {
-        self.peek().type_ == Eof
+    fn is_at_end(&mut self) -> bool {
+        self.peek().kind == TokenKind::EOF
     }
 
-    fn peek(&self) -> Token {
-        self.tokens[self.current].clone()
+    fn peek(&mut self) -> Token {
+		self.tokens[self.next_token].clone()
     }
 
-    fn previous(&self) -> Token {
-        self.tokens[self.current - 1].clone()
+    fn current(&mut self) -> Token {
+		self.tokens[self.next_token - 1].clone()
     }
 }
 
-// public stuff
-impl Parser<'_> {
-	pub fn new() -> Self {
-		Self {
-			context: Context::new(),
-			had_error: false,
-			panic_mode: false,
-			tokens: vec![].iter(),
+// expression stuff
+impl Parser {
+	fn expression(&mut self) -> PResult<ASTNode> {
+		self.equality()
+	}
+
+	fn equality(&mut self) -> PResult<ASTNode> {
+		let mut expr = self.term()?;
+
+		while self.matches(&[Equals, NotEquals]) {
+			let tok = self.current();
+			let rhs = self.term()?;
+			expr = new_node!(tok => Equality @s lhs: b!(expr), rhs: b!(rhs) );
+		}
+
+		Ok(expr)
+	}
+
+	fn term(&mut self) -> PResult<ASTNode> {
+		let mut expr = self.factor()?;
+
+		while self.matches(&[Plus, Minus]) {
+			let tok = self.current();
+			let rhs = self.factor()?;
+			expr = new_node!(tok => Term @s lhs: b!(expr), rhs: b!(rhs) );
+		}
+
+		Ok(expr)
+	}
+
+	fn factor(&mut self) -> PResult<ASTNode> {
+		let mut expr = self.power()?;
+
+		while self.matches(&[Multiply, Divide]) {
+			let tok = self.current();
+			let rhs = self.power()?;
+			expr = new_node!(tok => Factor @s lhs: b!(expr), rhs: b!(rhs) );
+		}
+
+		Ok(expr)
+	}
+
+	fn power(&mut self) -> PResult<ASTNode> {
+		let mut expr = self.unary()?;
+
+		while self.matches(&[Power]) {
+			let tok = self.current();
+			let rhs = self.power()?;
+			expr = new_node!(tok => Power @s base: b!(expr), power: b!(rhs) );
+		}
+
+		Ok(expr)
+	}
+
+	fn unary(&mut self) -> PResult<ASTNode> {
+		if self.matches(&[Minus]) {
+			let tok = self.current();
+			let expr = self.unary()?;
+			Ok(new_node!(tok => Unary @t b!(expr)))
+		} else {
+			self.primary()	
 		}
 	}
 
-	pub fn parse(&mut self, tokens: TokenIter) -> Context {
+	fn primary(&mut self) -> PResult<ASTNode> {
+		let token = self.peek();
 
-		self.advance();
+		if self.matches(&[Integer]) {
+			let text = token.span.get_part().unwrap_or("0").to_string();
+			// let intval = text.parse::<u64>().unwrap();
+
+			let base = if text.len() >= 2 {
+				match text.chars().nth(2).unwrap() {
+					'b' | 'B' => 2,
+					'c' | 'C' => 7,
+					'x' | 'X' => 16,
+					_ => 10,
+				}
+			} else { 10 };
+			// text.po
+
+			let intval= u64::from_str_radix(text.trim_start_matches("0x"), base);
+			Ok(new_node!(token => Literal @t Literal::Integer(intval.unwrap_or(0))))
+		}
+		else if self.matches(&[Float]) {
+			let floatval = token.span.get_part().unwrap_or("0.0")
+				.parse::<f64>().unwrap();
+			Ok(new_node!(token => Literal @t Literal::Float(floatval)))
+		}
+		else if self.matches(&[LeftParen]) {
+			let expr = self.expression()?;
+			self.consume(TokenKind::RightParen, "(")?;
+			Ok(new_node!(token => Grouping @t b!(expr)))
+		}
 		
+		else /* expected expression */ {
+			Err(new_formatted_error!(ExpectedExpression)
+				.with_quote(self.peek().span, None::<String>)
+			)
+		}
+	}
+}
+
+// public stuff
+impl Parser {
+	pub fn new() -> Self {
+		Self {
+			context: Context::new(),
+			// had_error: false,
+			// panic_mode: false,
+			next_token: 0,
+			tokens: vec![],
+		}
+	}
+
+	pub fn parse(&mut self, tokens: Vec<Token>) -> Context {
+		self.tokens = tokens;
+		self.next_token = 0;
+
+		match self.expression() {
+			Err(report) => report.dispatch(),
+			Ok(expr) => {
+				print!("resulting expression: ");
+				astprinter::ASTPrinter::print(&expr);
+			},
+		}
 		
 		// return context
 		self.context.clone()

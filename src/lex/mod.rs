@@ -9,7 +9,7 @@ use crate::{fmt_error_msg, deref_source};
 use crate::report::code::ErrorCode;
 use crate::runtime::types::Type;
 
-pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
+// pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
 
 pub struct Lexer {
 	source: *const Source,
@@ -80,7 +80,7 @@ impl Lexer {
 		}
 	}
 
-	fn error_token(&self, code: ErrorCode, message: impl ToString, kind: Option<TokenType>) -> Token {
+	fn error_token(&self, code: ErrorCode, message: impl ToString, kind: Option<TokenKind>) -> Token {
 		let faketok = match kind {
 			Some(kind) => Some(Box::new(self.make_token(kind))),
 			None => None,
@@ -133,20 +133,28 @@ impl Lexer {
 			while self.peek().is_alphanumeric() { self.advance(); }
 		}
 
-		// validate digits
 		let start = if base == 10 { self.start_offset } else { self.start_offset + 2 };
+		let base_str = match base {
+			2 => "binary",
+			7 => "octal",
+			10 => "decimal",
+			16 => "hexadecimal",
+			_ => unreachable!(),
+		};
+		
+		// validate length
+		if self.current_offset - start == 0 {
+			return formatted_error_token!(kind =>
+				self InvalidDigit deref_source!(self).at(start), base_str,
+				if kind == Integer { "integer" } else { "float" }
+			);
+		}
+		
+		// validate digits
 		for c in deref_source!(self).slice(start, self.current_offset).chars() {
 			// c is digit or '.' if float
 			if !c.is_digit(base) && (if kind == Float { c != '.' } else { true }) {
 				// invalid digit!
-				let base_str = match base {
-					2 => "binary",
-					7 => "octal",
-					10 => "decimal",
-					16 => "hexadecimal",
-					_ => unreachable!(),
-				};
-
 				return formatted_error_token!(kind =>
 					self InvalidDigit c, base_str,
 					if kind == Integer { "integer" } else { "float" }
@@ -220,14 +228,14 @@ impl Lexer {
 		self.skip_ignored();
 
 		self.start_offset = self.current_offset;
+
+		if self.at_end() {
+			return self.make_token(EOF);
+		}
 		
 		let c = self.advance();
 
-		if c == '\0' || self.at_end() {
-			return self.make_token(EOF);
-		}
-
-		else if c == '\n' {
+		if c == '\n' {
 			let tok = self.make_token(Newline);
 
 			while self.peek() == '\n' {
@@ -256,13 +264,16 @@ impl Lexer {
 		formatted_error_token!(self UnexpectedChar c)
 	}
 
-	pub fn lex(&mut self) -> TokenIter {
+	pub fn lex(&mut self) -> Vec<Token> {
 		let mut tokens = Vec::<Token>::new();
+
+		// at leas one (EOF) token
+		tokens.push(self.next());
 
 		while tokens.last().unwrap().kind != EOF {
 			tokens.push(self.next());
 		}
 
-		tokens.iter()
+		tokens
 	}
 }

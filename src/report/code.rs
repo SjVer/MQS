@@ -24,6 +24,8 @@ pub enum ErrorCode {
 	_S = 200, // syntax-error codes
 	ExpectedToken,
 	UnexpectedToken,
+	ExpectedDeclaration,
+	ExpectedExpression,
 	AlreadyDefined,
 	UseOfUndefined,
 	DuplicateParameter,
@@ -78,6 +80,8 @@ macro_rules! fmt_error_msg {
 
 	(ExpectedToken $tok:expr) => (format!("expected token `{}`", $tok));
 	(UnexpectedToken $tok:expr) => (format!("unexpected token `{}`", $tok));
+	(ExpectedExpression) => ("expected an expression");
+	(ExpectedDeclaration) => ("expected a declaration");
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));
 	(DuplicateParameter $param:expr) => (format!("duplicate parameter `{}`", $param));

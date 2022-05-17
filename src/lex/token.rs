@@ -24,8 +24,8 @@ pub enum TokenKind {
 	Divisible,
 
 	// expression operators
-	Equal,
-	NotEqual,
+	Equals,
+	NotEquals,
 	Plus,
 	Minus,
 	Multiply,
@@ -54,13 +54,13 @@ macro_rules! __somekind {
 	};
 }
 
-impl TokenType {
+impl TokenKind {
 	pub fn from_chars(c1: char, c2: char) -> Option<Self> {
 		match (c1, c2) {
 
 			(':', '=') => __somekind!(Define),
 
-			('/', '=') => __somekind!(NotEqual),
+			('/', '=') => __somekind!(NotEquals),
 			
 			_ => None
 		}
@@ -85,7 +85,7 @@ impl TokenType {
 
 			'%' => __somekind!(Divisible),
 
-			'=' => __somekind!(Equal),
+			'=' => __somekind!(Equals),
 			'+' => __somekind!(Plus),
 			'-' => __somekind!(Minus),
 			'*' => __somekind!(Multiply),

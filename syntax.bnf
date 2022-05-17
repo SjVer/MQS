@@ -28,16 +28,17 @@ xor				: and ('!|' and)*
 and				: binary ('&' binary)*
 binary			: match | comparison | divisible
 match			: expression ('<=>' | '</=>') expression
-comparison		: expression ('>' | '>=' | '<' | '<=') expression
+comparison		: expression ('==' | '!=' | '>' | '>=' | '<' | '<=') expression
 divisible		: expression '%' expression
 
 expression		: equality
-equality		: term ('=' term)*
+equality		: term (('=' | '/=') term)*
 term			: factor (('-' | '+') factor)*
-factor			: unary (('/' | '*') unary)*
-unary			: ('-') unary | power
-power			: primary ('^' power)?
-primary			: NUMBER | '(' expression ')'
+factor			: power (('/' | '*') power)*
+power			: unary ('^' power)?
+unary			: ('-') unary | primary
+primary			: INTEGER | FLOAT
+				| '(' expression ')'
 				| variable | call
 
 variable		: IDENT

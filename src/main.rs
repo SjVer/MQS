@@ -106,7 +106,7 @@ fn do_file() {
     let tokens = Lexer::new(filename.clone(), src).lex();
     Parser::new().parse(tokens);
 
-    new_formatted_error!(CouldNotCompile &filename).dispatch();
+    // new_formatted_error!(CouldNotCompile &filename).dispatch();
 }
 
 
