@@ -88,6 +88,8 @@ impl Span {
 		let start = self.start.column.unwrap_or(1);
 		let end = start + self.length;
 
+		println!("line: {:?}", line);
+
 		// unwrap line or return None
 		match line {
 			Some(line) => Some(&line[start..end]),

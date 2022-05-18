@@ -101,7 +101,7 @@ impl Parser {
 
     	while !self.is_at_end() {
     		println!("synch");
-    		
+
     		if self.current().kind == Newline { return; }
 
             match self.peek().kind {
@@ -122,12 +122,13 @@ impl Parser {
 // top-level stuff
 impl Parser {
 	fn top_level(&mut self) -> PResult<()> {
-		match self.peek().kind {
+		match self.advance().kind {
 			Apply => self.apply(),
 			_ => {
 				// expected top-level!
+				println!("CP: {:?}", self.current().kind);
 				Err(new_formatted_error!(ExpectedTopLevel)
-					.with_quote(self.peek().span, None::<String>)
+					.with_quote(self.current().span.clone(), None::<String>)
 				)
 			}
 		}

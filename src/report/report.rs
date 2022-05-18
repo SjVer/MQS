@@ -8,6 +8,7 @@ use yansi::{Color, Paint};
 use json::{object, stringify_pretty, JsonValue};
 
 
+#[derive(Debug)]
 pub struct Quote {
 	pub span: Span,
 	pub color: Color,
@@ -177,6 +178,7 @@ impl Report {
 	}
 
 	fn generate_quote(&self) -> String {
+		println!("{} => {:?}", self.message, self.quote);
 		if let Some(quote) = &self.quote {
 			quote.to_string(!get_cli_arg!(compact) && !self.notes.is_empty())
 		} else {
