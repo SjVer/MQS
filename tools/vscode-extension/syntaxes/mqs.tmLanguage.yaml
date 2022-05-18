@@ -17,6 +17,7 @@ variables:
 
   type: nat|int|flt
 
+  pathprefix: (?:/|~|\.|)
   ann-pattern: (?:\s*(:)\s*(?:({{type}})|(\S*)))?
   decl-pattern: \s*(?:({{ident}})|(\S*))\s*
   begindef-scope: keyword.definition.mqs
@@ -80,10 +81,15 @@ repository:
     - include: '#question-decl'
 
   import:
-    match: (#)\s*((?:{{ident}}\s*\/\s*)*(?:{{ident}}))
+    match: (#)\s*(?:({{pathprefix}})\s*(\/))?\s*(?:({{ident}})\s*(\/)\s*)*({{ident}})
     captures:
       '1': { name: keyword.control.import.mqs }
-      '2': { name: entity.name.namespace.mqs }
+      '0': { name: entity.name.namespace.mqs }
+      # '2': { name: entity.name.function.mqs }
+      # '3': { name: keyword.operator.path-separator.mqs }
+      # '4': { name: entity.name.namespace.mqs }
+      # '5': { name: keyword.operator.path-separator.mqs }
+      # '6': { name: entity.name.namespace.mqs }
 
   theorem-decl:
     begin: (!){{decl-pattern}}

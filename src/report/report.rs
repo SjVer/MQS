@@ -40,7 +40,7 @@ impl Quote {
 
 
 		// before: " lineno │ ..."
-		if let Some(line) = self.span.get_line_before() {
+		if let Ok(line) = self.span.get_line_before() {
 			text.push_str(&cyan(format!(" {:1$} │ ", lineno - 1, digits)));
 			text.push_str(line);
 			text.push('\n');
@@ -178,7 +178,6 @@ impl Report {
 	}
 
 	fn generate_quote(&self) -> String {
-		println!("{} => {:?}", self.message, self.quote);
 		if let Some(quote) = &self.quote {
 			quote.to_string(!get_cli_arg!(compact) && !self.notes.is_empty())
 		} else {

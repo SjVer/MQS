@@ -104,10 +104,8 @@ fn do_file() {
 
     let src = SOURCES!().new_source(filename.clone(), src);
     let tokens = Lexer::new(filename.clone(), src).lex();
-    // Parser::new().parse(tokens);
-    for t in &tokens {
-        println!("{} => {:?}", t.span.start.to_string(), t.kind);
-    }
+    // for t in &tokens { println!("{} => {:?}", t.span.start.to_string(), t.kind); }
+    Parser::new().parse(tokens);
 
     // new_formatted_error!(CouldNotCompile &filename).dispatch();
 }

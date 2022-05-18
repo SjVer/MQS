@@ -17,9 +17,12 @@ impl Source {
         &self.buff[start..end]
     }
 
-    pub fn slice_line(&self, line: usize) -> Option<&str> {
+    pub fn slice_line(&self, line: usize) -> Result<&str, ()> {
         // actual index is `line - 1`
-        self.buff.lines().nth(line - 1)
+        match self.buff.lines().nth(line - 1) {
+            Some(ln) => Ok(ln),
+            None => Err(()),
+        }
     }
 
     pub fn new(contents: String) -> Self {

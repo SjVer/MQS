@@ -1,7 +1,9 @@
 pub mod ast;
 pub mod astprinter;
 pub mod context;
-use self::ast::{ASTNode, ASTItem, Literal};
+mod apply;
+use ast::{ASTNode, ASTItem, Literal};
+use apply::{Path, PathPrefix};
 use crate::{
 	report::{error, Report},
 	lex::token::{*, TokenKind::*},
@@ -100,20 +102,19 @@ impl Parser {
     	self.advance();
 
     	while !self.is_at_end() {
-    		println!("synch");
-
     		if self.current().kind == Newline { return; }
 
-            match self.peek().kind {
+            // match self.peek().kind {
 
-            	// top-level only
-                Apply | Identifier if top_level => { return; }
+            // 	// top-level only
+            //     Apply | Identifier if top_level => { return; }
 
-                // declaration stuff
-                Variable | Function | Theorem | Conclusion | Question => { return; }
+            //     // declaration stuff
+            //     Variable | Function | Theorem | Conclusion | Question => { return; }
 
-                _ => {},
-            }
+            //     _ => {},
+            // }
+
             self.advance();
     	}
     }
@@ -126,7 +127,6 @@ impl Parser {
 			Apply => self.apply(),
 			_ => {
 				// expected top-level!
-				println!("CP: {:?}", self.current().kind);
 				Err(new_formatted_error!(ExpectedTopLevel)
 					.with_quote(self.current().span.clone(), None::<String>)
 				)
@@ -135,6 +135,24 @@ impl Parser {
 	}
 
 	fn apply(&mut self) -> PResult<()> {
+		// get optional prefix
+		let mut path = Path::new(
+			if self.matches(&[Divide]) { PathPrefix::Root }
+			else if self.matches(&[Tilde]) { PathPrefix::Home }
+			else if self.matches(&[Dot]) { PathPrefix::Working }
+			else { PathPrefix::None }
+		);
+
+		// consume '/' if prefix was given
+		if path.has_prefix() { self.consume(Divide, "/")?; }
+
+		loop {
+			self.consume(Identifier, "identifier")?;
+			path.append(self.current().span.get_part().unwrap_or(""));
+
+			if !self.matches(&[Divide]) { break; }
+		}
+
 		Ok(())
 	}
 }

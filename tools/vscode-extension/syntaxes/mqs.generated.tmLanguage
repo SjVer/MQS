@@ -186,18 +186,18 @@
       <key>import</key>
       <dict>
         <key>match</key>
-        <string>(#)\s*((?:[A-Za-z_][A-Za-z_0-9]*'*\s*\/\s*)*(?:[A-Za-z_][A-Za-z_0-9]*'*))</string>
+        <string>(#)\s*(?:((?:/|~|\.|))\s*(\/))?\s*(?:([A-Za-z_][A-Za-z_0-9]*'*)\s*(\/)\s*)*([A-Za-z_][A-Za-z_0-9]*'*)</string>
         <key>captures</key>
         <dict>
+          <key>0</key>
+          <dict>
+            <key>name</key>
+            <string>entity.name.namespace.mqs</string>
+          </dict>
           <key>1</key>
           <dict>
             <key>name</key>
             <string>keyword.control.import.mqs</string>
-          </dict>
-          <key>2</key>
-          <dict>
-            <key>name</key>
-            <string>entity.name.namespace.mqs</string>
           </dict>
         </dict>
       </dict>

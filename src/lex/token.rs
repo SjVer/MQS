@@ -18,7 +18,9 @@ pub enum TokenKind {
 	RightParen,
 	Define,
 	Colon,
+	Tilde,
 	Dot,
+	DoubleDot,
 
 	// theory operators
 	Divisible,
@@ -60,6 +62,8 @@ impl TokenKind {
 
 			(':', '=') => __somekind!(Define),
 
+			('.', '.') => __somekind!(DoubleDot),
+
 			('/', '=') => __somekind!(NotEquals),
 			
 			_ => None
@@ -81,6 +85,7 @@ impl TokenKind {
 			'(' => __somekind!(LeftParen),
 			')' => __somekind!(RightParen),
 			':' => __somekind!(Colon),
+			'~' => __somekind!(Tilde),
 			'.' => __somekind!(Dot),
 
 			'%' => __somekind!(Divisible),

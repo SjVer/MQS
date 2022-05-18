@@ -34,66 +34,49 @@ pub struct Span {
 }
 
 impl Span {
-	pub fn get_line_before(&self) -> Option<&str> {
+	pub fn get_line_before(&self) -> Result<&str, ()> {
 		match self.start.line {
 			Some(line) => if line <= 1 {
-				None
+				Err(())
 			} else {
 				deref_source!(self.start).slice_line(line - 1)
 			},
-			None => None,
+			None => Err(()),
 		}
 	}
 	
-	pub fn get_line(&self) -> Option<&str> {
+	pub fn get_line(&self) -> Result<&str, ()> {
 		match self.start.line {
 			Some(line) => deref_source!(self.start).slice_line(line),
-			None => None,
+			None => Err(()),
 		}
 	}
 
-	pub fn get_part_before(&self) -> Option<&str> {
+	pub fn get_part_before(&self) -> Result<&str, ()> {
 		// get full line or return None
-		let line = self.get_line();
-		if let None = line { return None; }
+		let line = self.get_line()?;
 
-		let end = self.start.column.unwrap_or(1);
+		let end = self.start.column.unwrap_or(1) - 1;
 
-		// unwrap line or return None
-		match line {
-			Some(line) => Some(&line[..end]),
-			None => None,
-		}
+		Ok(&line[..end])
 	}
 
-	pub fn get_part_after(&self) -> Option<&str> {
+	pub fn get_part_after(&self) -> Result<&str, ()> {
 		// get full line or return None
-		let line = self.get_line();
-		if let None = line { return None; }
+		let line = self.get_line()?;
 
-		let start = self.start.column.unwrap_or(1) + self.length;
+		let start = self.start.column.unwrap_or(1) - 1 + self.length;
 
-		// unwrap line or return None
-		match line {
-			Some(line) => Some(&line[start..]),
-			None => None,
-		}
+		Ok(&line[start..])
 	}
 
-	pub fn get_part(&self) -> Option<&str> {
+	pub fn get_part(&self) -> Result<&str, ()> {
 		// get full line or return None
-		let line = self.get_line();
-		if let None = line { return None; }
+		let line = self.get_line()?;
 
-		let start = self.start.column.unwrap_or(1);
+		let start = self.start.column.unwrap_or(1) - 1;
 		let end = start + self.length;
 
-		println!("line: {:?}", line);
-
-		// unwrap line or return None
-		match line {
-			Some(line) => Some(&line[start..end]),
-			None => None,
-		}
+		Ok(&line[start..end])
 	}
 }

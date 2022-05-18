@@ -41,6 +41,10 @@ macro_rules! formatted_error_token {
 
 // private token stuff
 impl Lexer {
+	fn new_line(&mut self) {
+		self.line += 1;
+		self.column = 1;
+	}
 
 	fn at_end(&self) -> bool {
 		//
@@ -191,8 +195,7 @@ impl Lexer {
 								}
 								else if self.at_end() { return; }
 								else if self.advance() == '\n' {
-									self.line += 1;
-									self.column = 0;
+									self.new_line();
 								}
 							}
 						} else {
@@ -219,7 +222,7 @@ impl Lexer {
 			current_offset: 0,
 
 			line: 1,
-			column: 0,
+			column: 1,
 			filename,
 		}
 	}
@@ -228,22 +231,22 @@ impl Lexer {
 		self.skip_ignored();
 
 		self.start_offset = self.current_offset;
-
+		
 		if self.at_end() {
 			return self.make_token(EOF);
 		}
 		
 		let c = self.advance();
-
+		
 		if c == '\n' {
-			let tok = self.make_token(Newline);
+			let mut tok = self.make_token(Newline);
+			tok.span.length = 0;
+
+			self.new_line();
 
 			while self.peek() == '\n' {
 				self.advance();
-
-				self.line += 1;
-				self.column = 0;
-
+				self.new_line();
 				self.skip_ignored();
 			}
 
