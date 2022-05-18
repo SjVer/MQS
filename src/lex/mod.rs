@@ -173,6 +173,10 @@ impl Lexer {
 		'base: loop {
 			match self.peek() {
 				' ' | '\r' | '\t' => { self.advance(); },
+				'\n' => {
+					self.advance();
+					self.new_line();
+				}
 				'-' => {
 					if self.peek_at(1) == '-' {
 						// comment
@@ -238,6 +242,7 @@ impl Lexer {
 		
 		let c = self.advance();
 		
+		/*
 		if c == '\n' {
 			let mut tok = self.make_token(Newline);
 			tok.span.length = 0;
@@ -252,8 +257,9 @@ impl Lexer {
 
 			return tok;
 		}
-
-		else if c.is_alphabetic() { return self.identifier(); }
+		
+		else */ if c.is_alphabetic() { return self.identifier(); }
+		
 		else if c.is_numeric() { return self.number(c); }
 
 		else if let Some(kind) = TokenKind::from_chars(c, self.peek()) {

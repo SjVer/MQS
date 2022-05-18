@@ -1,8 +1,11 @@
+use crate::report::Report;
+use std::path::PathBuf;
+
 #[derive(PartialEq)]
 pub enum PathPrefix {
 	Root, // '/'
 	Home, // '~'
-	Working, // '.'
+	Work, // '.'
 	None,
 }
 
@@ -26,6 +29,15 @@ impl Path {
 	pub fn append(&mut self, segment: impl ToString) {
 		self.segments.push(segment.to_string());
 	}
+
+	pub fn find_file(&self) -> Result<String, Report> {
+		let path = match self.prefix {
+			PathPrefix::Root => ,
+			PathPrefix::Home => ,
+			PathPrefix::Work => ,
+			PathPrefix::None => ,
+		};
+	}
 }
 
 impl ToString for Path {
@@ -33,7 +45,7 @@ impl ToString for Path {
 		let prefix = match &self.prefix {
 			PathPrefix::Root => "//",
 			PathPrefix::Home => "~/",
-			PathPrefix::Working => "./",
+			PathPrefix::Work => "./",
 			PathPrefix::None => "",
 		}.to_string();
 

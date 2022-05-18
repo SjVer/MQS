@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use crate::{report::Report, new_formatted_error};
+use std::{collections::HashMap, fs::read_to_string};
 
 pub struct Source {
     pub newlines: Vec<usize>,
@@ -58,7 +59,7 @@ impl Sources {
         self.files.contains_key(&file)
     }
 
-    pub fn new_source(&mut self, file: String, contents: String) -> *const Source {
+    pub fn new_raw_source(&mut self, file: String, contents: String) -> *const Source {
         //! replaces any existing source with same name
         if self.has_source(file.clone()) {
             self.remove_source(file.clone());
@@ -66,6 +67,18 @@ impl Sources {
 
         self.files.insert(file.clone(), Source::new(contents));
         self.files.get(&file).unwrap()
+    }
+
+    pub fn new_source(&mut self, file: String) -> Result<*const Source, Report> {
+        // read file and
+        let contents = match read_to_string(&file) {
+            Ok(text) => text,
+            Err(e) => {
+                return Err(new_formatted_error!(CouldNotOpen &file, e.kind()));
+            }
+        };
+
+        Ok(self.new_raw_source(file, contents))
     }
 
     pub fn remove_source(&mut self, file: String) {

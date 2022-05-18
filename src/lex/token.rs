@@ -41,7 +41,7 @@ pub enum TokenKind {
 	Float,
 	
 	// misc.
-	Newline,
+	// Newline,
 	EOF,
 	Error(ErrorCode, String, Option<Box<Token>>),
 }

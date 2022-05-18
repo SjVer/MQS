@@ -5,6 +5,7 @@ mod apply;
 use ast::{ASTNode, ASTItem, Literal};
 use apply::{Path, PathPrefix};
 use crate::{
+	SOURCES,
 	report::{error, Report},
 	lex::token::{*, TokenKind::*},
 	new_formatted_error
@@ -19,14 +20,11 @@ pub struct Parser {
 	// had_error: bool,
 	// panic_mode: bool,
 
-	skip_newlines: bool,
+	// skip_newlines: bool,
 	next_token: usize,
 	tokens: Vec<Token>,
 }
 
-macro_rules! current_span {
-	($self:ident) => ($self.current().span.clone());
-}
 macro_rules! b {
 	($what:expr) => (Box::new($what));
 }
@@ -55,28 +53,28 @@ impl Parser {
         if self.check(kind) {
             Ok(self.advance())
         } else {
+			println!("{:?}", self.peek().kind);
 			Err(new_formatted_error!(ExpectedToken what.to_string())
-				.with_quote(current_span!(self), Some("unexpected token here"))
+				.with_quote(self.peek().span, Some("unexpected token here"))
 			)
         }
     }
 
+	/*
 	fn consume_newline(&mut self, after: impl ToString) -> PResult<()> {
 		self.skip_newlines = false;
+		let consumed = self.consume(Newline, "newline");
+		self.skip_newlines = true;
 
-		// self.consume(Newline, "newline")?;
-		if let Err(report) = self.consume(Newline, "newline") {
-			report.message += &format!(" {}", after.to_string());
-
+		if let Err(mut report) = consumed {
+			report.message += &format!(" after {}", after.to_string());
 			self.skip_newlines = true;
-			
 			return Err(report);
 		}
 
-		self.skip_newlines = true;
-
 		Ok(())
 	}
+	*/
 
     fn check(&mut self, kind: TokenKind) -> bool {
         if self.is_at_end() {
@@ -101,11 +99,11 @@ impl Parser {
 			}
 		}
 
-		if self.skip_newlines && self.current().kind == Newline {
-			self.advance()
-		} else {
+		// if self.skip_newlines && self.current().kind == Newline {
+			// self.advance()
+		// } else {
 			self.current()
-		}
+		// }
     }
 
     fn is_at_end(&mut self) -> bool {
@@ -124,18 +122,18 @@ impl Parser {
     	self.advance();
 
     	while !self.is_at_end() {
-    		if self.current().kind == Newline { return; }
+    		// if self.current().kind == Newline { return; }
 
-            // match self.peek().kind {
+            match self.peek().kind {
 
-            // 	// top-level only
-            //     Apply | Identifier if top_level => { return; }
+            	// top-level only
+                Apply | Identifier if top_level => { return; }
 
-            //     // declaration stuff
-            //     Variable | Function | Theorem | Conclusion | Question => { return; }
+                // declaration stuff
+                Variable | Function | Theorem | Conclusion | Question => { return; }
 
-            //     _ => {},
-            // }
+                _ => {},
+            }
 
             self.advance();
     	}
@@ -155,9 +153,7 @@ impl Parser {
 			}
 		}
 
-		// consume newline
-		self.consume_newline("top-level statement")?;
-
+		// self.consume_newline("top-level statement")?;
 		Ok(())
 	}
 
@@ -166,13 +162,14 @@ impl Parser {
 		let mut path = Path::new(
 			if self.matches(&[Divide]) { PathPrefix::Root }
 			else if self.matches(&[Tilde]) { PathPrefix::Home }
-			else if self.matches(&[Dot]) { PathPrefix::Working }
+			else if self.matches(&[Dot]) { PathPrefix::Work }
 			else { PathPrefix::None }
 		);
 
 		// consume '/' if prefix was given
 		if path.has_prefix() { self.consume(Divide, "/")?; }
 
+		// get segments
 		loop {
 			self.consume(Identifier, "identifier")?;
 			path.append(self.current().span.get_part().unwrap_or(""));
@@ -180,6 +177,12 @@ impl Parser {
 			if !self.matches(&[Divide]) { break; }
 		}
 
+		// apply it
+		// println!("applying: {:?}", path.to_string());
+		let path = path.find_file()?;
+		let src = SOURCES!().new_source(path)?;
+		// TODO: parsing and getting context
+		
 		Ok(())
 	}
 }
@@ -293,6 +296,7 @@ impl Parser {
 			context: Context::new(),
 			// had_error: false,
 			// panic_mode: false,
+			// skip_newlines: true,
 			next_token: 0,
 			tokens: vec![],
 		}

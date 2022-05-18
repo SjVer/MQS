@@ -12,7 +12,7 @@ use object::{obj_filename, dis::Disassembler};
 use report::code::ErrorCode;
 use cli::{CLI_ARGS, LintMode, claperr};
 
-use std::{io::{Write, stderr}, fs::read_to_string, path::PathBuf};
+use std::{io::{Write, stderr}, path::PathBuf};
 use regex::Regex;
 
 pub fn exit(code: i32) {
@@ -31,7 +31,6 @@ fn finish_lint() {
         println!("]");
     }
 }
-
 
 fn do_review(objfile: PathBuf, error: report::Report) {
     // let filename = get_cli_arg!(infile).unwrap();
@@ -93,21 +92,22 @@ fn do_review(objfile: PathBuf, error: report::Report) {
 
 fn do_file() {
     let filename = get_cli_arg!(infile).unwrap();
-    let src = match read_to_string(&filename) {
-        Ok(text) => text,
-        Err(e) => {
-            new_formatted_error!(CouldNotOpen &filename, e.kind())
-                .dispatch();
-            std::process::exit(e.raw_os_error().unwrap());
-        }
+
+    let r = || -> Result<_, crate::report::Report> {
+        
+        let src = SOURCES!().new_source(filename.clone())?;
+        let tokens = Lexer::new(filename.clone(), src).lex();
+        // for t in &tokens { println!("{} => {:?}", t.span.start.to_string(), t.kind); }
+        Parser::new().parse(tokens);
+
+        Ok(())
     };
 
-    let src = SOURCES!().new_source(filename.clone(), src);
-    let tokens = Lexer::new(filename.clone(), src).lex();
-    // for t in &tokens { println!("{} => {:?}", t.span.start.to_string(), t.kind); }
-    Parser::new().parse(tokens);
-
-    // new_formatted_error!(CouldNotCompile &filename).dispatch();
+    if let Err(r) = r() {
+        r.dispatch();
+        new_formatted_error!(CouldNotCompile &filename).dispatch();
+        exit(1);
+    }
 }
 
 
