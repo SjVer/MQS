@@ -19,6 +19,7 @@ pub struct Parser {
 	// had_error: bool,
 	// panic_mode: bool,
 
+	skip_newlines: bool,
 	next_token: usize,
 	tokens: Vec<Token>,
 }
@@ -60,6 +61,23 @@ impl Parser {
         }
     }
 
+	fn consume_newline(&mut self, after: impl ToString) -> PResult<()> {
+		self.skip_newlines = false;
+
+		// self.consume(Newline, "newline")?;
+		if let Err(report) = self.consume(Newline, "newline") {
+			report.message += &format!(" {}", after.to_string());
+
+			self.skip_newlines = true;
+			
+			return Err(report);
+		}
+
+		self.skip_newlines = true;
+
+		Ok(())
+	}
+
     fn check(&mut self, kind: TokenKind) -> bool {
         if self.is_at_end() {
             false
@@ -83,7 +101,11 @@ impl Parser {
 			}
 		}
 
-		self.current()
+		if self.skip_newlines && self.current().kind == Newline {
+			self.advance()
+		} else {
+			self.current()
+		}
     }
 
     fn is_at_end(&mut self) -> bool {
@@ -124,14 +146,19 @@ impl Parser {
 impl Parser {
 	fn top_level(&mut self) -> PResult<()> {
 		match self.advance().kind {
-			Apply => self.apply(),
+			Apply => { self.apply()?; },
 			_ => {
 				// expected top-level!
-				Err(new_formatted_error!(ExpectedTopLevel)
+				return Err(new_formatted_error!(ExpectedTopLevel)
 					.with_quote(self.current().span.clone(), None::<String>)
-				)
+				);
 			}
 		}
+
+		// consume newline
+		self.consume_newline("top-level statement")?;
+
+		Ok(())
 	}
 
 	fn apply(&mut self) -> PResult<()> {

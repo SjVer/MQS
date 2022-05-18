@@ -1,4 +1,4 @@
-script			: top_level*
+script			: (top_level NEWLINE)*
 
 top_level		: apply
 				| section
