@@ -35,51 +35,6 @@ macro_rules! new_node {
 		ASTNode { token: $tok, item: ASTItem::$kind ( $($field)* ) }
 	};
 }
-/*
-// error stuff
-// impl Parser {
-// 	fn error(&mut self, report: Report) {
-// 		if self.panic_mode { return; }
-//
-// 		self.had_error = true;
-// 		self.panic_mode = true;
-//
-// 		report.dispatch();
-// 	}
-// }
-
-macro_rules! error {
-	($self:ident @none $code:ident $($arg:tt)*) => {
-		Err(
-			new_formatted_error!($code $($arg)*)
-		)
-	};
-	($self:ident @current $code:ident $($arg:tt)*) => {
-		Err(
-			new_formatted_error!($code $($arg)*)
-				.with_quote($self.current().span, None::<String>)
-		)
-	};
-	($self:ident @current $code:ident $($arg:tt)* => $msg:expr) => {
-		Err(
-			new_formatted_error!($code $($arg)*)
-				.with_quote($self.current().span, Some($msg))
-		)
-	};
-	($self:ident @next $code:ident $($arg:tt)*) => {
-		Err(
-			new_formatted_error!($code $($arg)*)
-				.with_quote($self.peek().span, None::<String>)
-		)
-	};
-	($self:ident @next $code:ident $($arg:expr)* => $msg:expr) => {
-		Err(
-			new_formatted_error!($code $($arg)*)
-				.with_quote($self.peek().span, Some($msg))
-		)
-	};
-}
-*/
 
 // token stuff
 impl Parser {
@@ -140,6 +95,47 @@ impl Parser {
     fn current(&mut self) -> Token {
 		self.tokens[self.next_token - 1].clone()
     }
+
+    fn synchronize(&mut self, top_level: bool) {
+    	self.advance();
+
+    	while !self.is_at_end() {
+    		println!("synch");
+    		
+    		if self.current().kind == Newline { return; }
+
+            match self.peek().kind {
+
+            	// top-level only
+                Apply | Identifier if top_level => { return; }
+
+                // declaration stuff
+                Variable | Function | Theorem | Conclusion | Question => { return; }
+
+                _ => {},
+            }
+            self.advance();
+    	}
+    }
+}
+
+// top-level stuff
+impl Parser {
+	fn top_level(&mut self) -> PResult<()> {
+		match self.peek().kind {
+			Apply => self.apply(),
+			_ => {
+				// expected top-level!
+				Err(new_formatted_error!(ExpectedTopLevel)
+					.with_quote(self.peek().span, None::<String>)
+				)
+			}
+		}
+	}
+
+	fn apply(&mut self) -> PResult<()> {
+		Ok(())
+	}
 }
 
 // expression stuff
@@ -210,20 +206,19 @@ impl Parser {
 		let token = self.peek();
 
 		if self.matches(&[Integer]) {
-			let text = token.span.get_part().unwrap_or("0").to_string();
+			let mut text = token.span.get_part().unwrap_or("0").to_string();
 			// let intval = text.parse::<u64>().unwrap();
 
 			let base = if text.len() >= 2 {
-				match text.chars().nth(2).unwrap() {
-					'b' | 'B' => 2,
-					'c' | 'C' => 7,
-					'x' | 'X' => 16,
+				match text.chars().nth(1).unwrap() {
+					'b' | 'B' => { text = text[2..].to_string(); 2 },
+					'c' | 'C' => { text = text[2..].to_string(); 7 },
+					'x' | 'X' => { text = text[2..].to_string(); 16 },
 					_ => 10,
 				}
 			} else { 10 };
-			// text.po
-
-			let intval= u64::from_str_radix(text.trim_start_matches("0x"), base);
+			
+			let intval= u64::from_str_radix(&text, base);
 			Ok(new_node!(token => Literal @t Literal::Integer(intval.unwrap_or(0))))
 		}
 		else if self.matches(&[Float]) {
@@ -261,12 +256,14 @@ impl Parser {
 		self.tokens = tokens;
 		self.next_token = 0;
 
-		match self.expression() {
-			Err(report) => report.dispatch(),
-			Ok(expr) => {
-				print!("resulting expression: ");
-				astprinter::ASTPrinter::print(&expr);
-			},
+		while !self.is_at_end() {
+			match self.top_level() {
+				Err(report) => {
+					report.dispatch();
+					self.synchronize(true);
+				},
+				Ok(_) => (),
+			};
 		}
 		
 		// return context

@@ -1,11 +1,11 @@
 script			: top_level*
 
-top_level		: import
-				| namespace
+top_level		: apply
+				| section
 				| declaration
 
-import			: '#' (IDENT '/')* IDENT
-namespace		: IDENT '{' (top_level)* '}'
+apply			: '#' (('/' | '~' | '.') '/')? (IDENT '/')* IDENT
+section			: IDENT '{' (top_level)* '}'
 
 declaration		: variable_decl
 				| function_decl

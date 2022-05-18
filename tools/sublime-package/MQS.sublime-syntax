@@ -27,7 +27,7 @@ contexts:
 
   main:
     - include: comment
-    - include: namespace
+    - include: section
     - include: declaration
     - include: expression
     - include: invalid
@@ -51,7 +51,7 @@ contexts:
 
   # TOP LEVEL
 
-  namespace:
+  section:
     - match: '({{ident}})\s*(\{)'
       captures:
         1: entity.name.namespace.mqs

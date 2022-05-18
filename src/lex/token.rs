@@ -8,7 +8,7 @@ pub enum TokenKind {
 	Function,
 	Variable,
 	Question,
-	Theory,
+	Theorem,
 	Apply,
 
 	// punctuation
@@ -73,7 +73,7 @@ impl TokenKind {
 			'@' => __somekind!(Function),
 			'$' => __somekind!(Variable),
 			'?' => __somekind!(Question),
-			'!' => __somekind!(Theory),
+			'!' => __somekind!(Theorem),
 			'#' => __somekind!(Apply),
 
 			'{' => __somekind!(LeftBrace),

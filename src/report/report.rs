@@ -160,7 +160,7 @@ impl Report {
 			if get_cli_arg!(compact) {
 				let pos = quote.span.start.to_string();
 				let colored = Color::Cyan.paint(pos).bold().to_string();
-				text.push_str(&format!(": {}", colored));
+				text.push_str(&format!("{} {}", Color::White.paint(":").bold(), colored));
 			}
 		}
 
