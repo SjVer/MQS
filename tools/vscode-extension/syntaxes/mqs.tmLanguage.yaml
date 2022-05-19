@@ -179,9 +179,9 @@ repository:
       name: keyword.definition.mqs
 
     # question
-    - match: <=>
+    - match: <>
       name: support.function.match.mqs
-    - match: </=>
+    - match: <!
       name: support.function.not-match.mqs
     - match: \%
       name: support.function.divisible.mqs

@@ -172,9 +172,9 @@ contexts:
       scope: keyword.definition.rewrite.mqs
 
     # question
-    - match: <=>
+    - match: <>
       scope: support.function.match.mqs
-    - match: </=>
+    - match: <!
       scope: support.function.not-match.mqs
     - match: \%
       scope: support.function.divisible.mqs

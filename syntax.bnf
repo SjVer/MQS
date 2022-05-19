@@ -25,12 +25,13 @@ annonation		: ':' TYPE
 theory			: or
 or				: xor ('|' xor)*
 xor				: and ('!|' and)*
-and				: binary ('&' binary)*
-binary			: match | comparison | divisible | exists
-match			: expression ('<=>' | '</=>') expression
-comparison		: expression ('==' | '!=' | '>' | '>=' | '<' | '<=') expression
-divisible		: expression '%' expression
-exists			: expression '??'
+and				: solveable ('&' solveable)*
+solveable		: match | comparison | divisible | exists
+match			: atom ('<>' | '<!') atom
+comparison		: atom ('==' | '!=' | '~' | '>' | '>=' | '<' | '<=') atom
+divisible		: atom '%' atom
+exists			: atom '??'
+atom			: '(' theory ')' | expression
 
 expression		: equality
 equality		: term (('=' | '/=') term)*
@@ -40,7 +41,8 @@ power			: unary ('^' power)?
 unary			: ('-') unary | primary
 primary			: INTEGER | FLOAT
 				| '(' expression ')'
-				| variable | call
+				| variable | call | builtin_call
 
-variable		: IDENT
-call			: IDENT '(' (expression (',' expression)*)? ')'
+variable		: (IDENT '::')* IDENT
+call			: (IDENT '::')* IDENT '(' (expression (',' expression)*)? ')'
+builtin_call	: (IDENT '::')* IDENT expression

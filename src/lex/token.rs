@@ -18,12 +18,24 @@ pub enum TokenKind {
 	RightParen,
 	Define,
 	Colon,
-	Tilde,
 	Dot,
 	DoubleDot,
 
 	// theory operators
+	Or,
+	XOr,
+	And,
+	Matches,
+	NotMatches,
+	DefEquals,
+	DefNotEquals,
+	RoughlyEquals,
+	Greater,
+	GreaterEqual,
+	Lesser,
+	LesserEqual,
 	Divisible,
+	Exists,
 
 	// expression operators
 	Equals,
@@ -64,6 +76,15 @@ impl TokenKind {
 
 			('.', '.') => __somekind!(DoubleDot),
 
+			('!', '|') => __somekind!(XOr),
+			('=', '=') => __somekind!(Matches),
+			('<', '>') => __somekind!(NotEquals),
+			('<', '!') => __somekind!(DefEquals),
+			('!', '=') => __somekind!(DefNotEquals),
+			('>', '=') => __somekind!(GreaterEqual),
+			('<', '=') => __somekind!(LesserEqual),
+			('?', '?') => __somekind!(Exists),
+
 			('/', '=') => __somekind!(NotEquals),
 			
 			_ => None
@@ -85,9 +106,13 @@ impl TokenKind {
 			'(' => __somekind!(LeftParen),
 			')' => __somekind!(RightParen),
 			':' => __somekind!(Colon),
-			'~' => __somekind!(Tilde),
 			'.' => __somekind!(Dot),
 
+			'|' => __somekind!(Or),
+			'&' => __somekind!(And),
+			'~' => __somekind!(RoughlyEquals),
+			'>' => __somekind!(Greater),
+			'<' => __somekind!(Lesser),
 			'%' => __somekind!(Divisible),
 
 			'=' => __somekind!(Equals),

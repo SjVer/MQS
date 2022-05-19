@@ -463,13 +463,13 @@
           </dict>
           <dict>
             <key>match</key>
-            <string>&lt;=&gt;</string>
+            <string>&lt;&gt;</string>
             <key>name</key>
             <string>support.function.match.mqs</string>
           </dict>
           <dict>
             <key>match</key>
-            <string>&lt;/=&gt;</string>
+            <string>&lt;!</string>
             <key>name</key>
             <string>support.function.not-match.mqs</string>
           </dict>

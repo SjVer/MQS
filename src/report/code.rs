@@ -27,6 +27,7 @@ pub enum ErrorCode {
 	UnexpectedToken,
 	ExpectedTopLevel,
 	ExpectedDeclaration,
+	ExpectedTheory,
 	ExpectedExpression,
 	AlreadyDefined,
 	UseOfUndefined,
@@ -86,6 +87,7 @@ macro_rules! fmt_error_msg {
 	(UnexpectedToken $tok:expr) => (format!("unexpected token `{}`", $tok));
 	(ExpectedTopLevel) => ("expected a top-level statement");
 	(ExpectedDeclaration) => ("expected a declaration");
+	(ExpectedTheory) => ("expected a theory");
 	(ExpectedExpression) => ("expected an expression");
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));

@@ -2,12 +2,13 @@ pub mod ast;
 pub mod astprinter;
 pub mod context;
 mod apply;
-use ast::{ASTNode, ASTItem, Literal};
+use ast::*;
 use apply::{Path, PathPrefix, STDLIB_DIR};
 use crate::{
 	SOURCES,
 	report::{error, Report},
 	lex::{Lexer, token::{*, TokenKind::*}},
+	runtime::question::Question as rQuestion,
 	new_formatted_error
 };
 pub use context::Context;
@@ -27,12 +28,20 @@ pub struct Parser {
 macro_rules! b {
 	($what:expr) => (Box::new($what));
 }
-macro_rules! new_node {
+macro_rules! expr_node {
 	($tok:expr => $kind:ident @s $($field:tt)*) => {
-		ASTNode { token: $tok, item: ASTItem::$kind { $($field)* } }
+		ExprNode { token: $tok, item: ExprItem::$kind { $($field)* } }
 	};
 	($tok:expr => $kind:ident @t $($field:tt)*) => {
-		ASTNode { token: $tok, item: ASTItem::$kind ( $($field)* ) }
+		ExprNode { token: $tok, item: ExprItem::$kind ( $($field)* ) }
+	};
+}
+macro_rules! theory_node {
+	($tok:expr => $kind:ident @s $($field:tt)*) => {
+		TheoryNode { token: $tok, item: TheoryItem::$kind { $($field)* } }
+	};
+	($tok:expr => $kind:ident @t $($field:tt)*) => {
+		TheoryNode { token: $tok, item: TheoryItem::$kind ( $($field)* ) }
 	};
 }
 
@@ -155,7 +164,7 @@ impl Parser {
 		// get optional prefix
 		let mut path = Path::new(
 			if self.matches(&[Divide]) { PathPrefix::Root }
-			else if self.matches(&[Tilde]) { PathPrefix::Home }
+			else if self.matches(&[RoughlyEquals]) { PathPrefix::Home }
 			else if self.matches(&[Dot]) { PathPrefix::Work }
 			else { PathPrefix::None }
 		);
@@ -198,6 +207,7 @@ impl Parser {
 	}
 
 	fn question(&mut self) -> PResult<()> {
+		// get ident of next available number
 		let ident = if self.matches(&[Identifier]) {
 			self.current().span.get_part().unwrap().to_string()
 		} else {
@@ -206,79 +216,167 @@ impl Parser {
 
 		// TODO: parameters
 
+		// parse theory
 		self.consume(Define, ":=")?;
+		let th = self.theory()?;
 
-		self.expression()?;
-
+		// add question to context and Ok
+		self.context.questions.push(rQuestion{
+			name: ident,
+			theory: th,
+		});
 		Ok(())
+	}
+}
+
+// theory stuff
+impl Parser {
+	fn theory(&mut self) -> PResult<TheoryNode> {
+		self.or()
+	}
+
+	fn or(&mut self) -> PResult<TheoryNode> {
+		let mut th = self.xor()?;
+
+		while self.matches(&[Or]) {
+			let tok = self.current();
+			let rhs = self.xor()?;
+			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
+		}
+
+		Ok(th)
+	}
+
+	fn xor(&mut self) -> PResult<TheoryNode> {
+		let mut th = self.and()?;
+
+		while self.matches(&[XOr]) {
+			let tok = self.current();
+			let rhs = self.and()?;
+			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
+		}
+
+		Ok(th)
+	}
+
+	fn and(&mut self) -> PResult<TheoryNode> {
+		let mut th = self.solveable()?;
+
+		while self.matches(&[And]) {
+			let tok = self.current();
+			let rhs = self.solveable()?;
+			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
+		}
+
+		Ok(th)
+	}
+
+	fn solveable(&mut self) -> PResult<TheoryNode> {
+		let mut atom = self.atom()?;
+		let tok = self.peek();
+
+		if self.matches(&[Matches, NotMatches]) {
+			let rhs = self.atom()?;
+			Ok(theory_node!(tok => Match @s lhs: b!(atom), rhs: b!(rhs) ))
+		}
+		else if self.matches(&[DefEquals, DefNotEquals, RoughlyEquals, Greater, GreaterEqual, Lesser, LesserEqual]) {
+			let rhs = self.atom()?;
+			Ok(theory_node!(tok => Comparison @s lhs: b!(atom), rhs: b!(rhs) ))
+		}
+		else if self.matches(&[Divisible]) {
+			let rhs = self.atom()?;
+			Ok(theory_node!(tok => Divisible @s expr: b!(atom), divisor: b!(rhs) ))
+		}
+		else if self.matches(&[Exists]) {
+			Ok(theory_node!(tok => Exists @t b!(atom) ))
+		}
+
+		else { /* expected theory */
+			Err(new_formatted_error!(ExpectedTheory)
+				.with_quote(self.peek().span, None::<String>)
+			)
+		}
+	}
+
+	fn atom(&mut self) -> PResult<TheoryNode> {
+		let token = self.peek();
+
+		if self.matches(&[LeftParen]) {
+			let th = self.theory()?;
+			self.consume(TokenKind::RightParen, ")")?;
+			Ok(theory_node!(token => Grouping @t b!(th)))
+		} else {
+			let expr = self.expression()?;
+			Ok(theory_node!(token => Expression @t expr))
+		}
 	}
 }
 
 // expression stuff
 impl Parser {
-	fn expression(&mut self) -> PResult<ASTNode> {
+	fn expression(&mut self) -> PResult<ExprNode> {
 		self.equality()
 	}
 
-	fn equality(&mut self) -> PResult<ASTNode> {
+	fn equality(&mut self) -> PResult<ExprNode> {
 		let mut expr = self.term()?;
 
 		while self.matches(&[Equals, NotEquals]) {
 			let tok = self.current();
 			let rhs = self.term()?;
-			expr = new_node!(tok => Equality @s lhs: b!(expr), rhs: b!(rhs) );
+			expr = expr_node!(tok => Equality @s lhs: b!(expr), rhs: b!(rhs) );
 		}
 
 		Ok(expr)
 	}
 
-	fn term(&mut self) -> PResult<ASTNode> {
+	fn term(&mut self) -> PResult<ExprNode> {
 		let mut expr = self.factor()?;
 
 		while self.matches(&[Plus, Minus]) {
 			let tok = self.current();
 			let rhs = self.factor()?;
-			expr = new_node!(tok => Term @s lhs: b!(expr), rhs: b!(rhs) );
+			expr = expr_node!(tok => Term @s lhs: b!(expr), rhs: b!(rhs) );
 		}
 
 		Ok(expr)
 	}
 
-	fn factor(&mut self) -> PResult<ASTNode> {
+	fn factor(&mut self) -> PResult<ExprNode> {
 		let mut expr = self.power()?;
 
 		while self.matches(&[Multiply, Divide]) {
 			let tok = self.current();
 			let rhs = self.power()?;
-			expr = new_node!(tok => Factor @s lhs: b!(expr), rhs: b!(rhs) );
+			expr = expr_node!(tok => Factor @s lhs: b!(expr), rhs: b!(rhs) );
 		}
 
 		Ok(expr)
 	}
 
-	fn power(&mut self) -> PResult<ASTNode> {
+	fn power(&mut self) -> PResult<ExprNode> {
 		let mut expr = self.unary()?;
 
 		while self.matches(&[Power]) {
 			let tok = self.current();
 			let rhs = self.power()?;
-			expr = new_node!(tok => Power @s base: b!(expr), power: b!(rhs) );
+			expr = expr_node!(tok => Power @s base: b!(expr), power: b!(rhs) );
 		}
 
 		Ok(expr)
 	}
 
-	fn unary(&mut self) -> PResult<ASTNode> {
+	fn unary(&mut self) -> PResult<ExprNode> {
 		if self.matches(&[Minus]) {
 			let tok = self.current();
 			let expr = self.unary()?;
-			Ok(new_node!(tok => Unary @t b!(expr)))
+			Ok(expr_node!(tok => Unary @t b!(expr)))
 		} else {
 			self.primary()	
 		}
 	}
 
-	fn primary(&mut self) -> PResult<ASTNode> {
+	fn primary(&mut self) -> PResult<ExprNode> {
 		let token = self.peek();
 
 		if self.matches(&[Integer]) {
@@ -295,17 +393,17 @@ impl Parser {
 			} else { 10 };
 			
 			let intval= u64::from_str_radix(&text, base);
-			Ok(new_node!(token => Literal @t Literal::Integer(intval.unwrap_or(0))))
+			Ok(expr_node!(token => Literal @t Literal::Integer(intval.unwrap_or(0))))
 		}
 		else if self.matches(&[Float]) {
 			let floatval = token.span.get_part().unwrap_or("0.0")
 				.parse::<f64>().unwrap();
-			Ok(new_node!(token => Literal @t Literal::Float(floatval)))
+			Ok(expr_node!(token => Literal @t Literal::Float(floatval)))
 		}
 		else if self.matches(&[LeftParen]) {
 			let expr = self.expression()?;
-			self.consume(TokenKind::RightParen, "(")?;
-			Ok(new_node!(token => Grouping @t b!(expr)))
+			self.consume(TokenKind::RightParen, ")")?;
+			Ok(expr_node!(token => Grouping @t b!(expr)))
 		}
 		
 		else /* expected expression */ {
