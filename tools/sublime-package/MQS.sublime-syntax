@@ -168,6 +168,8 @@ contexts:
     # misc
     - match: :=
       scope: keyword.definition.mqs
+    - match: ->
+      scope: keyword.definition.rewrite.mqs
 
     # question
     - match: <=>

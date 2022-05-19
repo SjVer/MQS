@@ -1,5 +1,12 @@
-use crate::report::Report;
-use std::{path::PathBuf, env::{home_dir, current_dir}};
+#![allow(deprecated)]
+
+use std::{
+	path::PathBuf,
+	env::{home_dir, current_dir},
+	fs::canonicalize,
+};
+
+pub static STDLIB_DIR: &str = "/usr/share/mqs/sections/";
 
 #[derive(PartialEq)]
 pub enum PathPrefix {
@@ -30,13 +37,45 @@ impl Path {
 		self.segments.push(segment.to_string());
 	}
 
-	pub fn find_file(&self) -> Result<String, Report> {
-		let path = match self.prefix {
-			PathPrefix::Root => ,
-			PathPrefix::Home => ,
-			PathPrefix::Work => ,
-			PathPrefix::None => ,
+	pub fn find_file(&self) -> Result<String, &str> {
+		let mut path = match self.prefix {
+			PathPrefix::Root => {
+				// find current dir and pop until just root is left
+				let pwd = match current_dir() {
+					Ok(dir) => dir,
+					Err(_) => { return Err("could not find root directory"); },
+				};
+				let mut pwd = match canonicalize(pwd) {
+					Ok(dir) => dir,
+					Err(_) => { return Err("could not find root directory"); },
+				};
+				while pwd.pop() {}
+				pwd
+			},
+			PathPrefix::Home => {
+				match home_dir() {
+					Some(dir) => dir,
+					None => { return Err("could not find home directory"); },
+				}
+			},
+			PathPrefix::Work => {
+				match current_dir() {
+					Ok(dir) => dir,
+					Err(_) => { return Err("could not find working directory"); },
+				}
+			},
+			PathPrefix::None => PathBuf::from(STDLIB_DIR),
 		};
+
+		for segment in &self.segments {
+			path.push(segment);
+		}
+
+		Ok(path.display().to_string() + ".mqs")
+	}
+
+	pub fn get_ident(&self) -> String {
+		self.segments[self.segments.len() - 1].clone()
 	}
 }
 

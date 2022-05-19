@@ -1,4 +1,4 @@
-script			: (top_level NEWLINE)*
+script			: (top_level)*
 
 top_level		: apply
 				| section
@@ -26,10 +26,11 @@ theory			: or
 or				: xor ('|' xor)*
 xor				: and ('!|' and)*
 and				: binary ('&' binary)*
-binary			: match | comparison | divisible
+binary			: match | comparison | divisible | exists
 match			: expression ('<=>' | '</=>') expression
 comparison		: expression ('==' | '!=' | '>' | '>=' | '<' | '<=') expression
 divisible		: expression '%' expression
+exists			: expression '??'
 
 expression		: equality
 equality		: term (('=' | '/=') term)*

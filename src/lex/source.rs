@@ -74,7 +74,7 @@ impl Sources {
         let contents = match read_to_string(&file) {
             Ok(text) => text,
             Err(e) => {
-                return Err(new_formatted_error!(CouldNotOpen &file, e.kind()));
+                return Err(new_formatted_error!(CouldNotOpen "file", &file, e.kind()));
             }
         };
 

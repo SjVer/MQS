@@ -1,7 +1,7 @@
 #std -- import std
 
 -- theorem
-!unfold := x^2 + ..0 x := (x + ..0 / 2)^2 - (..0 / 2)^2
+!unfold := x^2 + ..0 x -> (x + ..0 / 2)^2 - (..0 / 2)^2
 
 -- variables
 $old := x^1 + 4 x + y^2 + 6 y = 0

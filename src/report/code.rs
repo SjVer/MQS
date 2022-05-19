@@ -12,6 +12,7 @@ pub enum ErrorCode {
 	CouldNotOpen,
 	CouldNotCompile,
 	CannotExplainCode,
+	CannotApply,
 	CannotReview,
 	InvalidStepNumber,
 
@@ -68,9 +69,11 @@ impl ErrorCode {
 
 #[macro_export]
 macro_rules! fmt_error_msg {
-	(CouldNotOpen $file:expr, $why:expr) => (format!("could not open file '{}': {}", $file, std::io::Error::from($why)));
+	(CouldNotOpen $what:expr, $file:expr, $why:expr) => (format!("could not open {} '{}': {}", $what, $file, std::io::Error::from($why)));
+	(CouldNotOpen $name:expr, $why:expr) => (format!("could not open '{}': {}", $name, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
 	(CannotExplainCode $code:expr) => (format!("cannot explain invalid error code {:?}", $code));
+	(CannotApply $name:expr, $why:expr) => (format!("cannot apply section '{}': {}", $name, $why));
 	(CannotReview $what:expr, $name:expr) => (format!("cannot review {} '{}'", $what, $name));
 	(InvalidStepNumber $step:expr, $len:expr) => (format!("invalid step number '{}' not in range [1-{}]", $step, $len));
 	

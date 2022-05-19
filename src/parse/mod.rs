@@ -3,11 +3,11 @@ pub mod astprinter;
 pub mod context;
 mod apply;
 use ast::{ASTNode, ASTItem, Literal};
-use apply::{Path, PathPrefix};
+use apply::{Path, PathPrefix, STDLIB_DIR};
 use crate::{
 	SOURCES,
 	report::{error, Report},
-	lex::token::{*, TokenKind::*},
+	lex::{Lexer, token::{*, TokenKind::*}},
 	new_formatted_error
 };
 pub use context::Context;
@@ -17,8 +17,7 @@ type PResult<T> = Result<T, Report>;
 pub struct Parser {
 	context: Context,
 
-	// had_error: bool,
-	// panic_mode: bool,
+	had_error: bool,
 
 	// skip_newlines: bool,
 	next_token: usize,
@@ -144,17 +143,12 @@ impl Parser {
 impl Parser {
 	fn top_level(&mut self) -> PResult<()> {
 		match self.advance().kind {
-			Apply => { self.apply()?; },
-			_ => {
-				// expected top-level!
-				return Err(new_formatted_error!(ExpectedTopLevel)
+			Apply => self.apply(),
+			Question => self.question() ,
+			_ => Err(new_formatted_error!(ExpectedTopLevel)
 					.with_quote(self.current().span.clone(), None::<String>)
-				);
-			}
+				)
 		}
-
-		// self.consume_newline("top-level statement")?;
-		Ok(())
 	}
 
 	fn apply(&mut self) -> PResult<()> {
@@ -177,12 +171,45 @@ impl Parser {
 			if !self.matches(&[Divide]) { break; }
 		}
 
-		// apply it
-		// println!("applying: {:?}", path.to_string());
-		let path = path.find_file()?;
-		let src = SOURCES!().new_source(path)?;
-		// TODO: parsing and getting context
+		// find file
+		let fspath = match path.find_file() {
+			Ok(p) => p,
+			Err(why) => { return Err(new_formatted_error!(CannotApply path.to_string(), why)); },
+		};
+
+		// get source
+		let src = match SOURCES!().new_source(fspath.clone()) {
+			Ok(src) => src,
+			Err(mut report) => {
+				if !path.has_prefix() {
+					report.message = report.message.replace(STDLIB_DIR, "");
+				}
+				return Err(report);
+			},
+		};
+
+		// lex and parse
+		let tokens = Lexer::new(fspath, src).lex();
+        if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
+	        self.context.add_section(path.get_ident(), c);
+        }
 		
+		Ok(())
+	}
+
+	fn question(&mut self) -> PResult<()> {
+		let ident = if self.matches(&[Identifier]) {
+			self.current().span.get_part().unwrap().to_string()
+		} else {
+			self.context.questions.len().to_string()
+		};
+
+		// TODO: parameters
+
+		self.consume(Define, ":=")?;
+
+		self.expression()?;
+
 		Ok(())
 	}
 }
@@ -294,15 +321,14 @@ impl Parser {
 	pub fn new() -> Self {
 		Self {
 			context: Context::new(),
-			// had_error: false,
-			// panic_mode: false,
+			had_error: false,
 			// skip_newlines: true,
 			next_token: 0,
 			tokens: vec![],
 		}
 	}
 
-	pub fn parse(&mut self, tokens: Vec<Token>) -> Context {
+	pub fn parse(&mut self, filename: String, tokens: Vec<Token>) -> PResult<Context> {
 		self.tokens = tokens;
 		self.next_token = 0;
 
@@ -311,12 +337,17 @@ impl Parser {
 				Err(report) => {
 					report.dispatch();
 					self.synchronize(true);
+					self.had_error = true;
 				},
 				Ok(_) => (),
 			};
 		}
 		
 		// return context
-		self.context.clone()
+		if self.had_error {
+			Err(new_formatted_error!(CouldNotCompile &filename))
+		} else {
+			Ok(self.context.clone())
+		}
 	}
 }
