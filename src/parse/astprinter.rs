@@ -78,18 +78,34 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Logical { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
+		let epxr = if let TheoryItem::Exists ( expr ) = &node.item {
+			self.visit(&expr)
 		} else { unreachable!() };
 
-		format!("{} {} {}", lhs, this)
+		format!("{} {}", epxr, this)
+	}
+
+	fn visit_grouping(&mut self, node: &TheoryNode) -> String {
+		if let TheoryItem::Grouping ( expr ) = &node.item {
+			format!("({})", self.visit(&expr))
+		} else {
+			unreachable!()
+		}
+	}
+
+	fn visit_expression(&mut self, node: &TheoryNode) -> String {
+		if let TheoryItem::Expression ( expr ) = &node.item {
+			format!("{}", ExprPrinter::print(&expr))
+		} else {
+			unreachable!()
+		}
 	}
 
 }
 
 impl TheoryPrinter {
-	pub fn print(root: &TheoryNode) {
-		println!("{}", TheoryPrinter{}.visit(root));
+	pub fn print(root: &TheoryNode) -> String {
+		TheoryPrinter{}.visit(root)
 	}
 }
 
@@ -181,7 +197,7 @@ impl ExprVisitor<String> for ExprPrinter {
 }
 
 impl ExprPrinter {
-	pub fn print(root: &ExprNode) {
-		println!("{}", ExprPrinter{}.visit(root));
+	pub fn print(root: &ExprNode) -> String {
+		ExprPrinter{}.visit(root)
 	}
 }

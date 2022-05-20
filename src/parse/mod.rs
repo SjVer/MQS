@@ -272,7 +272,7 @@ impl Parser {
 	}
 
 	fn solveable(&mut self) -> PResult<TheoryNode> {
-		let mut atom = self.atom()?;
+		let atom = self.atom()?;
 		let tok = self.peek();
 
 		if self.matches(&[Matches, NotMatches]) {

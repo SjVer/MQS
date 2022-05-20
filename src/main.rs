@@ -98,7 +98,11 @@ fn do_file() {
         let src = SOURCES!().new_source(filename.clone())?;
         let tokens = Lexer::new(filename.clone(), src).lex();
         // for t in &tokens { println!("{} => {:?}", t.span.start.to_string(), t.kind); }
-        Parser::new().parse(filename.clone(), tokens)?;
+        let context = Parser::new().parse(filename.clone(), tokens)?;
+
+        for q in &context.questions {
+            println!("?{}: `{}`", q.name, parse::astprinter::TheoryPrinter::print(&q.theory));
+        }
 
         Ok(())
     };

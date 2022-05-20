@@ -1,6 +1,7 @@
 use crate::parse::ast::TheoryNode;
 
+#[derive(Clone)]
 pub struct Question {
-	name: String,
-	theory: TheoryNode,
+	pub name: String,
+	pub theory: TheoryNode,
 }
