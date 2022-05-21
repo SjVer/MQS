@@ -8,7 +8,7 @@ pub mod info;
 
 use lex::Lexer;
 use parse::Parser; 
-use object::{obj_filename, dis::Disassembler};
+use object::{obj_filename, {dis::Disassembler, asm::Assembler}};
 use report::code::ErrorCode;
 use cli::{CLI_ARGS, LintMode, claperr};
 
@@ -95,14 +95,14 @@ fn do_file() {
 
     let r = || -> Result<_, crate::report::Report> {
         
+        // read source and parse
         let src = SOURCES!().new_source(filename.clone())?;
         let tokens = Lexer::new(filename.clone(), src).lex();
-        // for t in &tokens { println!("{} => {:?}", t.span.start.to_string(), t.kind); }
         let context = Parser::new().parse(filename.clone(), tokens)?;
 
-        for q in &context.questions {
-            println!("?{}: `{}`", q.name, parse::astprinter::TheoryPrinter::print(&q.theory));
-        }
+        // assemble
+        let objf = obj_filename(filename.clone());
+        Assembler::new().asm(&context, objf);
 
         Ok(())
     };
