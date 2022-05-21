@@ -1,8 +1,32 @@
-import { Disposable, languages, Uri, window } from 'vscode';
+import { spawnSync } from 'child_process';
+import { Disposable, languages, Uri, window, workspace } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
+const mqsQuickInfoExecutable = workspace.getConfiguration('mqs').get<string>("mqsQuickInfoExecutablePath");
+const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutablePath");
+
+export enum QuickInfoMode {
+	ExitCode,
+	Json,
+}
+
+export async function quickInfo(mode: QuickInfoMode, command: string, ...args: any[]): Promise<number | object> {
+	try {
+		let cli_args = [command].concat(args);
+		let r = spawnSync(mqsQuickInfoExecutable, cli_args, { encoding: 'utf-8', shell: true });
+
+		switch (mode) {
+			case QuickInfoMode.ExitCode: return r.status ?? 0;
+			case QuickInfoMode.Json: return JSON.parse(r.stdout) ?? {}; 
+		}
+
+	} catch (e) {
+		console.warn(e);
+		window.showWarningMessage(`Executing mqs-quickinfo failed. Please check if setting 'mqs.mqsQuickInfoExecutablePath' is valid.`)
+	}
+}
 
 // refreshes codelens
 export const refreshCodeLensCallback = () => {
@@ -14,6 +38,35 @@ export const refreshCodeLensCallback = () => {
 
 // solves a question
 export const solveQuestionCallback = (uri: Uri, name: string) => {
-	window.showInformationMessage(`solved ${name} (${uri})`);
+	try {
+		spawnSync(mqsExecutable, [uri.fsPath], { encoding: 'utf-8', shell: true });
+	} catch (e) {
+		console.warn(e);
+		window.showWarningMessage("Executing mqs failed. Please check if setting 'mqs.mqsExecutablePath' is valid.");
+	}
+
+	refreshCodeLensCallback();
+};
+
+// reviews a question
+export const reviewQuestionCallback = (uri: Uri, name: string) => {
+	try {
+
+		let args = [uri.fsPath, '--review', `--at=${name}`];
+		let r = spawnSync(mqsExecutable, args, { encoding: 'utf-8', shell: true });
+		
+		if(r.error) {
+			window.showErrorMessage(`Failed to review '?${name}'. See interpreter output for more information.`);
+			return;
+		}
+
+		// TODO: window shit
+
+
+	} catch (e) {
+		console.warn(e);
+		window.showWarningMessage("Executing mqs failed. Please check if setting 'mqs.mqsExecutablePath' is valid.");
+	}
+
 	refreshCodeLensCallback();
 };

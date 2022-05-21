@@ -32,7 +32,7 @@ fn finish_lint() {
     }
 }
 
-fn do_review(objfile: PathBuf, error: report::Report) {
+fn do_review(objfile: PathBuf, srcfile: String, error: report::Report) {
     // let filename = get_cli_arg!(infile).unwrap();
     // let objfile = obj_filename(filename.clone());
 
@@ -41,7 +41,7 @@ fn do_review(objfile: PathBuf, error: report::Report) {
         exit(1);
     }
 
-    let mut dis = Disassembler::new(objfile);
+    let mut dis = Disassembler::new(objfile, srcfile);
     dis.dis();
 
     // check and parse --at option
@@ -139,7 +139,7 @@ fn main() {
     }
     else if let Some(path) = get_cli_arg!(dis) {
         let error = new_formatted_error!(CannotReview "nonexistent object file", path);
-        do_review(PathBuf::from(&path), error);
+        do_review(PathBuf::from(&path), path, error);
     }
     else {
         if let None = get_cli_arg!(infile) {
@@ -152,7 +152,8 @@ fn main() {
         if get_cli_arg!(review) {
             let filename = get_cli_arg!(infile).unwrap();
             let objpath = obj_filename(filename.clone());
-            do_review(objpath, new_formatted_error!(CannotReview "uninterpreted file", filename));
+            let error = new_formatted_error!(CannotReview "uninterpreted file", filename);
+            do_review(objpath, filename, error);
         }
         else { do_file(); }
     }

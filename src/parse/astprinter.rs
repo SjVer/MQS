@@ -10,6 +10,25 @@ use crate::lex::token::TokenKind::{self, *};
 
 pub struct TheoryPrinter;
 
+macro_rules! if_let_binary {
+	($self:ident $node:ident $what:path => $a:ident $b:ident) => {
+		if let $what { $a, $b } = &$node.item {
+			($self.visit(&$a), $self.visit(&$b))
+		} else {
+			unreachable!()
+		}
+	};
+}
+macro_rules! if_let_single {
+	($self:ident $node:ident $what:path) => {
+		if let $what ( a ) = &$node.item {
+			$self.visit(&a)
+		} else {
+			unreachable!()
+		}
+	};
+}
+
 impl TheoryVisitor<String> for TheoryPrinter {
 	fn visit_logical(&mut self, node: &TheoryNode) -> String {
 		let this = match node.token.kind {
@@ -19,10 +38,7 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Logical { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Logical => lhs rhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -33,10 +49,7 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Match { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Match => rhs lhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -52,10 +65,7 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Comparison { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Comparison => rhs lhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -65,10 +75,7 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let TheoryItem::Divisible { expr, divisor } = &node.item {
-			(self.visit(&expr), self.visit(&divisor))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node TheoryItem::Divisible => expr divisor);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -78,19 +85,13 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			_ => unreachable!(),
 		};
 
-		let epxr = if let TheoryItem::Exists ( expr ) = &node.item {
-			self.visit(&expr)
-		} else { unreachable!() };
-
-		format!("{} {}", epxr, this)
+		let expr = if_let_single!(self node TheoryItem::Exists);
+		format!("{} {}", expr, this)
 	}
 
 	fn visit_grouping(&mut self, node: &TheoryNode) -> String {
-		if let TheoryItem::Grouping ( expr ) = &node.item {
-			format!("({})", self.visit(&expr))
-		} else {
-			unreachable!()
-		}
+		let th = if_let_single!(self node TheoryItem::Grouping);
+		format!("({})", th)
 	}
 
 	fn visit_expression(&mut self, node: &TheoryNode) -> String {
@@ -100,7 +101,6 @@ impl TheoryVisitor<String> for TheoryPrinter {
 			unreachable!()
 		}
 	}
-
 }
 
 impl TheoryPrinter {
@@ -121,10 +121,7 @@ impl ExprVisitor<String> for ExprPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Equality { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Equality => lhs rhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -135,10 +132,7 @@ impl ExprVisitor<String> for ExprPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Term { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Term => lhs rhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -149,10 +143,7 @@ impl ExprVisitor<String> for ExprPrinter {
 			_ => unreachable!(),
 		};
 
-		let (lhs, rhs) = if let Factor { lhs, rhs } = &node.item {
-			(self.visit(&lhs), self.visit(&rhs))
-		} else { unreachable!() };
-
+		let (lhs, rhs) = if_let_binary!(self node Factor => lhs rhs);
 		format!("{} {} {}", lhs, this, rhs)
 	}
 
@@ -162,27 +153,17 @@ impl ExprVisitor<String> for ExprPrinter {
 			_ => unreachable!(),
 		};
 
-		let expr = if let Unary(expr) = &node.item {
-			self.visit(&expr)
-		} else { unreachable!() };
-
+		let expr = if_let_single!(self node Unary);
 		format!("{}{}", this, expr)
 	}
 
 	fn visit_power(&mut self, node: &ExprNode) -> String {
-		let (base, power) = 
-			if let ExprItem::Power { base, power } = &node.item {
-				(self.visit(&base), self.visit(&power))
-			} else { unreachable!() };
-
+		let (base, power) = if_let_binary!(self node ExprItem::Power => base power);
 		format!("{}^{}", base, power)
 	}
 
 	fn visit_grouping(&mut self, node: &ExprNode) -> String {
-		let expr = if let ExprItem::Grouping(expr) = &node.item {
-			self.visit(&expr)
-		} else { unreachable!() };
-
+		let expr = if_let_single!(self node ExprItem::Grouping);
 		format!("({})", expr)
 	}
 

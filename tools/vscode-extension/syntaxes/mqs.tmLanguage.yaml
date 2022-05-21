@@ -149,7 +149,7 @@ repository:
       '4': { name: keyword.definition.function.mqs }
 
   question-decl:
-    begin: (\?)\s*(?:({{ident}})\s*)?
+    begin: (\?)(?!\?)\s*(?:({{ident}})\s*)?
     beginCaptures:
       '1': { name: keyword.declaration.question.mqs }
       '2': { name: entity.name.function.question.mqs }
@@ -185,11 +185,13 @@ repository:
       name: support.function.not-match.mqs
     - match: \%
       name: support.function.divisible.mqs
-
-    # normal
+    - match: \?\?
+      name: support.function.exists.mqs
     - match: \=|/=
       name: keyword.operator.comparison.mqs
     - match: <=|>=|<>|<|>
+
+    # expression
       name: keyword.operator.relational.mqs
     - match: \*|/|-|\+|\^
       name: keyword.operator.arithmetic.mqs

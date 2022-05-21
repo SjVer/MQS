@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.MQSCodeLensProvider = void 0;
+var commands_1 = require("./commands");
 var questionRegex = /(?:^|\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm;
 var commentStartRegex = /--\*(?!.*\*--)/gm;
 var commentEndRegex = /\*--/gm;
@@ -60,41 +61,48 @@ var MQSCodeLensProvider = /** @class */ (function () {
     }
     MQSCodeLensProvider.prototype.provideCodeLenses = function (document) {
         return __awaiter(this, void 0, void 0, function () {
-            var lenses, unnamedQuestionsCount, inComment, ln, line, match, name;
-            return __generator(this, function (_a) {
-                lenses = [];
-                unnamedQuestionsCount = 0;
-                inComment = false;
-                for (ln = 0; ln < document.lineCount; ln++) {
-                    line = document.lineAt(ln);
-                    if (!inComment && questionRegex.test(line.text)) {
-                        match = /(?!\-\-\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm.exec(line.text);
-                        name = match[1] ? match[1] : (unnamedQuestionsCount++).toString();
+            var lenses, questions, _a, _b, _i, name, line, is_correct;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        lenses = [];
+                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.Json, "get-questions", document.uri.fsPath)];
+                    case 1:
+                        questions = _c.sent();
+                        _a = [];
+                        for (_b in questions)
+                            _a.push(_b);
+                        _i = 0;
+                        _c.label = 2;
+                    case 2:
+                        if (!(_i < _a.length)) return [3 /*break*/, 6];
+                        name = _a[_i];
+                        line = document.lineAt(questions[name] - 1);
                         // push solve codelens
                         lenses.push({
                             isResolved: true,
                             range: line.range,
                             command: createMQSSolveCommand(document.uri, name)
                         });
-                        // push review result codelens
+                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.ExitCode, "can-review-question", document.uri.fsPath, name)];
+                    case 3:
+                        if (!((_c.sent()) === 0)) return [3 /*break*/, 5];
+                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.ExitCode, "question-is-true", document.uri.fsPath, name)];
+                    case 4:
+                        is_correct = (_c.sent()) === 0;
                         lenses.push({
-                            isResolved: false,
-                            range: line.range
+                            isResolved: true,
+                            range: line.range,
+                            command: createMQSReviewCommand(document.uri, name, is_correct)
                         });
-                        ln--; // idk why but it'll skip the next line if ln isn't decremented
-                    }
-                    if (commentStartRegex.test(line.text))
-                        inComment = true;
-                    if (inComment && commentEndRegex.test(line.text))
-                        inComment = false;
+                        _c.label = 5;
+                    case 5:
+                        _i++;
+                        return [3 /*break*/, 2];
+                    case 6: return [2 /*return*/, lenses];
                 }
-                return [2 /*return*/, lenses];
             });
         });
-    };
-    MQSCodeLensProvider.prototype.resolveCodeLens = function (lens, token) {
-        if (lens.isResolved)
-            return null;
     };
     return MQSCodeLensProvider;
 }());

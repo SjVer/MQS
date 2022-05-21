@@ -3,15 +3,18 @@ use super::question::{IQuestion, IStep, StringCollection, StringIndex};
 use std::{io::{BufReader, Read}, fs::File, path::PathBuf};
 
 macro_rules! dis_error {
-	($code:ident $($arg:tt)*) => {
+	($f:expr => $code:ident $($arg:tt)*) => {
 		{
 			crate::new_formatted_error!($code $($arg)*).dispatch();
+			crate::new_formatted_error!(CouldNotReview $f).dispatch();
 			crate::exit(1);
 		}
 	};
 }
 
 pub struct Disassembler {
+	filename: String,
+
 	data: Vec<u8>,
 	bi: usize,
 
@@ -21,20 +24,22 @@ pub struct Disassembler {
 
 impl Disassembler {
 
-	pub fn new(path: PathBuf) -> Self {
+	pub fn new(path: PathBuf, srcfile: String) -> Self {
 		let mut data = Vec::<u8>::new();
 
 		match File::open(&path) {
 			Ok(f) => {
 				match BufReader::new(f).read_to_end(&mut data) {
 					Ok(_) => (),
-					Err(e) => dis_error!(CouldNotOpen path.display(), e.kind())
+					Err(e) => dis_error!(srcfile => CouldNotOpen path.display(), e.kind())
 				}
 			},
-			Err(e) => { dis_error!(CouldNotOpen path.display(), e.kind()); }
+			Err(e) => { dis_error!(srcfile => CouldNotOpen path.display(), e.kind()); }
 		};
 
 		Self {
+			filename: srcfile,
+
 			data,
 			bi: 0,
 
@@ -50,7 +55,7 @@ impl Disassembler {
 			($size:expr, $buffsize:expr => $type:ty) => (
 				{
 					self.bi += $size;
-					if self.bi >= self.data.len() { dis_error!(MissingData); }
+					if self.bi >= self.data.len() { dis_error!(self.filename => MissingData); }
 
 					let mut buff = [0u8; $buffsize];
 					buff[$buffsize - $size..].copy_from_slice(
@@ -63,7 +68,7 @@ impl Disassembler {
 		}
 		macro_rules! test_or_error {
 			($cond:expr => $code:ident $($arg:tt)*) => {
-				if !($cond) { dis_error!($code $($arg)*); }
+				if !($cond) { dis_error!(self.filename => $code $($arg)*); }
 			};
 		}
 

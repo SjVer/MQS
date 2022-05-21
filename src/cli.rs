@@ -22,7 +22,7 @@ macro_rules! lint_mode_is {
 
 
 /// struct containing arguments from cli
-#[derive(Parser, Clone, Debug)]
+#[derive(Parser, Default, Clone, Debug)]
 #[clap(version, about, long_about = cli::DESCRIPTION)]
 #[clap(propagate_version = true)]
 #[clap(global_setting(DeriveDisplayOrder))]
@@ -57,6 +57,15 @@ pub struct CliArgs {
 
     #[clap(long, help = cli::ARG_EXPLAIN)]
     pub explain: Option<u16>,
+}
+
+pub fn set_cli_args_empty() {
+    unsafe {
+        CLI_ARGS = Some(CliArgs{
+            quiet: true,
+            ..Default::default()
+        });
+    }
 }
 
 

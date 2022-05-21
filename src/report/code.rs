@@ -11,6 +11,7 @@ pub enum ErrorCode {
 	_C = -100, // codes without code
 	CouldNotOpen,
 	CouldNotCompile,
+	CouldNotReview,
 	CannotExplainCode,
 	CannotApply,
 	CannotReview,
@@ -73,6 +74,7 @@ macro_rules! fmt_error_msg {
 	(CouldNotOpen $what:expr, $file:expr, $why:expr) => (format!("could not open {} '{}': {}", $what, $file, std::io::Error::from($why)));
 	(CouldNotOpen $name:expr, $why:expr) => (format!("could not open '{}': {}", $name, std::io::Error::from($why)));
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
+	(CouldNotReview $file:expr) => (format!("could not review '{}' due to previous error", $file));
 	(CannotExplainCode $code:expr) => (format!("cannot explain invalid error code {:?}", $code));
 	(CannotApply $name:expr, $why:expr) => (format!("cannot apply section '{}': {}", $name, $why));
 	(CannotReview $what:expr, $name:expr) => (format!("cannot review {} '{}'", $what, $name));

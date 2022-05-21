@@ -1,4 +1,5 @@
-import { CodeLensProvider, TextDocument, CodeLens, Command, Uri, CancellationToken, ProviderResult } from "vscode";
+import { CodeLensProvider, TextDocument, CodeLens, Command, Uri } from "vscode";
+import { quickInfo, QuickInfoMode } from './commands';
 
 const questionRegex = /(?:^|\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm; 
 const commentStartRegex = /--\*(?!.*\*--)/gm;
@@ -25,41 +26,30 @@ export class MQSCodeLensProvider implements CodeLensProvider {
 
 	async provideCodeLenses(document: TextDocument): Promise<CodeLens[]> {
 		let lenses: CodeLens[] = [];
-		let unnamedQuestionsCount: number = 0;
-		let inComment: boolean = false;
 
-		for(let ln = 0; ln < document.lineCount; ln++) {
-			const line = document.lineAt(ln);
+		let questions = await quickInfo(QuickInfoMode.Json, "get-questions", document.uri.fsPath) as object;
+		for(var name in questions) {
+			const line = document.lineAt(questions[name] - 1);
 
-			if(!inComment && questionRegex.test(line.text)) {
-				// figure out name
-				const match = /(?!\-\-\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm.exec(line.text);
-				const name = match[1] ? match[1] : (unnamedQuestionsCount++).toString();
+			// push solve codelens
+			lenses.push({
+				isResolved: true,
+				range: line.range,
+				command: createMQSSolveCommand(document.uri, name)
+			});
 
-				// push solve codelens
+			// push review result codelens
+			if(await quickInfo(QuickInfoMode.ExitCode, "can-review-question", document.uri.fsPath, name) === 0) {
+				const is_correct = await quickInfo(QuickInfoMode.ExitCode, "question-is-true", document.uri.fsPath, name) === 0;
+
 				lenses.push({
 					isResolved: true,
 					range: line.range,
-					command: createMQSSolveCommand(document.uri, name)
+					command: createMQSReviewCommand(document.uri, name, is_correct)
 				});
-				
-				// push review result codelens
-				lenses.push({
-					isResolved: false,
-					range: line.range,
-				});
-				
-				ln--; // idk why but it'll skip the next line if ln isn't decremented
 			}
-
-			if(commentStartRegex.test(line.text)) inComment = true;
-			if(inComment && commentEndRegex.test(line.text)) inComment = false;
 		}
 		
 		return lenses;
-	}
-
-	resolveCodeLens(lens: CodeLens, token: CancellationToken): ProviderResult<CodeLens> {
-		if(lens.isResolved) return null;
 	}
 }

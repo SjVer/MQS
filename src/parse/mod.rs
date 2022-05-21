@@ -213,6 +213,7 @@ impl Parser {
 		} else {
 			self.context.questions.len().to_string()
 		};
+		let token = self.current();
 
 		// TODO: parameters
 
@@ -222,6 +223,7 @@ impl Parser {
 
 		// add question to context and Ok
 		self.context.questions.push(rQuestion{
+			token,
 			name: ident,
 			theory: th,
 		});

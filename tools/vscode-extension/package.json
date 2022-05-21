@@ -45,7 +45,12 @@
               "mqs.mqsExecutablePath": {
                   "type": "string",
                   "default": "/usr/bin/mqs",
-                  "description": "The path to the MQS executable (/usr/bin/mqs by default)"
+                  "description": "The path to the MQS executable"
+              },
+              "mqs.mqsQuickInfoExecutablePath": {
+                  "type": "string",
+                  "default": "/usr/bin/mqs-quickinfo",
+                  "description": "The path to the MQS QuickInfo executable"
               },
               "mqs.logDebugInfo": {
                   "type": "boolean",
