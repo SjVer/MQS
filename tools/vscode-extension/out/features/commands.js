@@ -46,11 +46,11 @@ var mqsQuickInfoExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqs
 var mqsExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsExecutablePath");
 var md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
 function mdHighlighter(str, lang, attrs) {
-    console.log(str);
-    console.log(lang);
-    console.log(attrs);
-    console.log("---");
-    return '';
+    // str is contents, lang is language
+    if (lang != "mqs")
+        return '';
+    var new_str = new vscode_1.MarkdownString().appendCodeblock(str, "mqs");
+    return "`".concat(new_str, "`");
 }
 var QuickInfoMode;
 (function (QuickInfoMode) {
@@ -105,24 +105,23 @@ exports.solveQuestionCallback = solveQuestionCallback;
 // reviews a question
 var reviewQuestionCallback = function (uri, name) {
     try {
+        // run mqs review
         var args = [uri.fsPath, '--review', "--at=".concat(name)];
         var r = (0, child_process_1.spawnSync)(mqsExecutable, args, { encoding: 'utf-8', shell: true });
         if (r.error) {
             vscode_1.window.showErrorMessage("Failed to review '?".concat(name, "'. See interpreter output for more information."));
             return;
         }
-        // window shit
-        var panel = vscode_1.window.createWebviewPanel("markdown.preview", "Review of `?".concat(name, "`"), { viewColumn: vscode_1.ViewColumn.Beside });
+        // prepare stdout for markdown-to-html translation
         var text = r.stdout.trim().replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, function (substr) {
             var args = [];
             for (var _i = 1; _i < arguments.length; _i++) {
                 args[_i - 1] = arguments[_i];
             }
-            console.log(substr);
-            console.log(args);
-            return "\n```mqs\n".concat(args[0], "\n```\n");
+            return "\n```mqs\n".concat(args[0], "```\n");
         });
-        console.log(text);
+        // create webview
+        var panel = vscode_1.window.createWebviewPanel("markdown.preview", "Review of `?".concat(name, "`"), { viewColumn: vscode_1.ViewColumn.Beside });
         panel.webview.html = md.render(text, process.env);
     }
     catch (e) {

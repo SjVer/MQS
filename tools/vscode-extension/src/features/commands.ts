@@ -15,7 +15,7 @@ function mdHighlighter(str: string, lang: string, attrs: string): string {
 	// str is contents, lang is language
 	if(lang != "mqs") return '';
 	let new_str = new MarkdownString().appendCodeblock(str, "mqs");
-	return `\`${new_str}\``;
+	return `\`${new_str.value}\``;
 }
 
 export enum QuickInfoMode {
