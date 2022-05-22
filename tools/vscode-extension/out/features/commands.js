@@ -44,7 +44,14 @@ var MarkDownIt = require("markdown-it");
 var codeLensProvider = new codeLensProvider_1.MQSCodeLensProvider();
 var mqsQuickInfoExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsQuickInfoExecutablePath");
 var mqsExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsExecutablePath");
-var md = new MarkDownIt();
+var md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
+function mdHighlighter(str, lang, attrs) {
+    console.log(str);
+    console.log(lang);
+    console.log(attrs);
+    console.log("---");
+    return '';
+}
 var QuickInfoMode;
 (function (QuickInfoMode) {
     QuickInfoMode[QuickInfoMode["ExitCode"] = 0] = "ExitCode";
@@ -105,8 +112,17 @@ var reviewQuestionCallback = function (uri, name) {
             return;
         }
         // window shit
-        var panel = vscode_1.window.createWebviewPanel("mqsQuestionReview", "Review of `?".concat(name, "`"), { viewColumn: vscode_1.ViewColumn.Beside });
-        var text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;");
+        var panel = vscode_1.window.createWebviewPanel("markdown.preview", "Review of `?".concat(name, "`"), { viewColumn: vscode_1.ViewColumn.Beside });
+        var text = r.stdout.trim().replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, function (substr) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            console.log(substr);
+            console.log(args);
+            return "\n```mqs\n".concat(args[0], "\n```\n");
+        });
+        console.log(text);
         panel.webview.html = md.render(text, process.env);
     }
     catch (e) {

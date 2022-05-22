@@ -5,9 +5,15 @@ import * as MarkDownIt from "markdown-it";
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
+
 const mqsQuickInfoExecutable = workspace.getConfiguration('mqs').get<string>("mqsQuickInfoExecutablePath");
 const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutablePath");
-const md = new MarkDownIt();
+
+const md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
+function mdHighlighter(str: string, lang: string, attrs: string): string {
+	// str is contents
+	return str;
+}
 
 export enum QuickInfoMode {
 	ExitCode,
@@ -53,20 +59,23 @@ export const solveQuestionCallback = (uri: Uri, name: string) => {
 // reviews a question
 export const reviewQuestionCallback = (uri: Uri, name: string) => {
 	try {
-
+		// run mqs review
 		let args = [uri.fsPath, '--review', `--at=${name}`];
 		let r = spawnSync(mqsExecutable, args, { encoding: 'utf-8', shell: true });
-		
 		if(r.error) {
 			window.showErrorMessage(`Failed to review '?${name}'. See interpreter output for more information.`);
 			return;
 		}
 
-		// window shit
-		const panel = window.createWebviewPanel("mqsQuestionReview", `Review of \`?${name}\``, { viewColumn: ViewColumn.Beside });
-		let text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;");
-		panel.webview.html = md.render(text, process.env);
 		
+		// prepare stdout for markdown-to-html translation
+		let text = r.stdout.trim().replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, (substr, ...args) => {
+			return `\n\`\`\`mqs\n${args[0]}\n\`\`\`\n`;
+		});
+		
+		// create webview
+		const panel = window.createWebviewPanel("markdown.preview", `Review of \`?${name}\``, { viewColumn: ViewColumn.Beside });
+		panel.webview.html = md.render(text, process.env);
 
 	} catch (e) {
 		console.warn(e);
