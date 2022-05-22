@@ -41,6 +41,7 @@ var child_process_1 = require("child_process");
 var vscode_1 = require("vscode");
 var codeLensProvider_1 = require("./codeLensProvider");
 var MarkDownIt = require("markdown-it");
+var shiki = require('shiki');
 var codeLensProvider = new codeLensProvider_1.MQSCodeLensProvider();
 var mqsQuickInfoExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsQuickInfoExecutablePath");
 var mqsExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsExecutablePath");
@@ -48,9 +49,17 @@ var md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highligh
 function mdHighlighter(str, lang, attrs) {
     // str is contents, lang is language
     if (lang != "mqs")
-        return '';
-    var new_str = new vscode_1.MarkdownString().appendCodeblock(str, "mqs");
-    return "`".concat(new_str, "`");
+        return;
+    shiki.getHighlighter({
+        langs: [
+            {
+                id: 'mqs',
+                scopeName: 'source.mqs',
+                path: '../../syntaxes/mqs.generated.tmLanguage'
+            }
+        ]
+    })
+        .then(function (highlighter) { return highlighter.codeToHtml(str, { lang: 'mqs' }); })["else"](function () { return ''; });
 }
 var QuickInfoMode;
 (function (QuickInfoMode) {

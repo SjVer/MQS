@@ -9,6 +9,7 @@
 		]
 	},
 	"include": [
-		"src/**/*"
+		"src/**/*",
+		"node_modules/shiki/dist/index.d.ts"
 	]
 }

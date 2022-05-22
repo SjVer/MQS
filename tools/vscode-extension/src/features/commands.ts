@@ -1,8 +1,8 @@
 import { spawnSync } from 'child_process';
 import { Disposable, languages, Uri, ViewColumn, window, workspace, MarkdownString } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
-import { textToMarkedString } from "./utils/markedTextUtil";
 import * as MarkDownIt from "markdown-it";
+import { Highlighter } from 'shiki';
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
@@ -13,9 +13,19 @@ const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutab
 const md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
 function mdHighlighter(str: string, lang: string, attrs: string): string {
 	// str is contents, lang is language
-	if(lang != "mqs") return '';
-	let new_str = new MarkdownString().appendCodeblock(str, "mqs");
-	return `\`${new_str.value}\``;
+	if(lang != "mqs") return;
+
+	shiki.getHighlighter({
+		langs: [
+			{
+				id: 'mqs',
+				scopeName: 'source.mqs',
+				path: '../../syntaxes/mqs.generated.tmLanguage'
+			}
+		]
+	})
+		.then(highlighter => { return highlighter.codeToHtml(str, { lang: 'mqs' }) })
+		.else(() => { return ''; });
 }
 
 export enum QuickInfoMode {

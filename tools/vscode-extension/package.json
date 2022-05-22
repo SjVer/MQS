@@ -90,6 +90,7 @@
     "url": "https://github.com/SjVer/MQS.git"
   },
   "dependencies": {
-    "markdown-it": "^13.0.1"
+    "markdown-it": "^13.0.1",
+    "shiki": "^0.10.1"
   }
 }
