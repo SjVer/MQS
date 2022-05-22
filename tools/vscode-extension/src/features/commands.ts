@@ -1,6 +1,7 @@
 import { spawnSync } from 'child_process';
-import { Disposable, languages, Uri, ViewColumn, window, workspace } from 'vscode';
+import { Disposable, languages, Uri, ViewColumn, window, workspace, MarkdownString } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
+import { textToMarkedString } from "./utils/markedTextUtil";
 import * as MarkDownIt from "markdown-it";
 
 export let codelensDisposable: Disposable;
@@ -11,8 +12,10 @@ const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutab
 
 const md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
 function mdHighlighter(str: string, lang: string, attrs: string): string {
-	// str is contents
-	return str;
+	// str is contents, lang is language
+	if(lang != "mqs") return '';
+	let new_str = new MarkdownString().appendCodeblock(str, "mqs");
+	return `\`${new_str}\``;
 }
 
 export enum QuickInfoMode {
@@ -70,7 +73,7 @@ export const reviewQuestionCallback = (uri: Uri, name: string) => {
 		
 		// prepare stdout for markdown-to-html translation
 		let text = r.stdout.trim().replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, (substr, ...args) => {
-			return `\n\`\`\`mqs\n${args[0]}\n\`\`\`\n`;
+			return `\n\`\`\`mqs\n${args[0]}\`\`\`\n`;
 		});
 		
 		// create webview
