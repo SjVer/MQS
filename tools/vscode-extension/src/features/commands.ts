@@ -1,11 +1,13 @@
 import { spawnSync } from 'child_process';
-import { Disposable, languages, Uri, window, workspace } from 'vscode';
+import { Disposable, languages, Uri, ViewColumn, window, workspace } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
+import * as MarkDownIt from "markdown-it";
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
 const mqsQuickInfoExecutable = workspace.getConfiguration('mqs').get<string>("mqsQuickInfoExecutablePath");
 const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutablePath");
+const md = new MarkDownIt();
 
 export enum QuickInfoMode {
 	ExitCode,
@@ -60,8 +62,11 @@ export const reviewQuestionCallback = (uri: Uri, name: string) => {
 			return;
 		}
 
-		// TODO: window shit
-
+		// window shit
+		const panel = window.createWebviewPanel("mqsQuestionReview", `Review of \`?${name}\``, { viewColumn: ViewColumn.Beside });
+		let text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;");
+		panel.webview.html = md.render(text, process.env);
+		
 
 	} catch (e) {
 		console.warn(e);

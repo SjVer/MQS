@@ -36,13 +36,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.solveQuestionCallback = exports.refreshCodeLensCallback = exports.quickInfo = exports.QuickInfoMode = exports.codelensDisposable = void 0;
+exports.reviewQuestionCallback = exports.solveQuestionCallback = exports.refreshCodeLensCallback = exports.quickInfo = exports.QuickInfoMode = exports.codelensDisposable = void 0;
 var child_process_1 = require("child_process");
 var vscode_1 = require("vscode");
 var codeLensProvider_1 = require("./codeLensProvider");
+var MarkDownIt = require("markdown-it");
 var codeLensProvider = new codeLensProvider_1.MQSCodeLensProvider();
 var mqsQuickInfoExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsQuickInfoExecutablePath");
 var mqsExecutable = vscode_1.workspace.getConfiguration('mqs').get("mqsExecutablePath");
+var md = new MarkDownIt();
 var QuickInfoMode;
 (function (QuickInfoMode) {
     QuickInfoMode[QuickInfoMode["ExitCode"] = 0] = "ExitCode";
@@ -83,7 +85,6 @@ var refreshCodeLensCallback = function () {
 exports.refreshCodeLensCallback = refreshCodeLensCallback;
 // solves a question
 var solveQuestionCallback = function (uri, name) {
-    vscode_1.window.showInformationMessage("solved ".concat(name, " (").concat(uri, ")"));
     try {
         (0, child_process_1.spawnSync)(mqsExecutable, [uri.fsPath], { encoding: 'utf-8', shell: true });
     }
@@ -94,3 +95,24 @@ var solveQuestionCallback = function (uri, name) {
     (0, exports.refreshCodeLensCallback)();
 };
 exports.solveQuestionCallback = solveQuestionCallback;
+// reviews a question
+var reviewQuestionCallback = function (uri, name) {
+    try {
+        var args = [uri.fsPath, '--review', "--at=".concat(name)];
+        var r = (0, child_process_1.spawnSync)(mqsExecutable, args, { encoding: 'utf-8', shell: true });
+        if (r.error) {
+            vscode_1.window.showErrorMessage("Failed to review '?".concat(name, "'. See interpreter output for more information."));
+            return;
+        }
+        // window shit
+        var panel = vscode_1.window.createWebviewPanel("mqsQuestionReview", "Review of `?".concat(name, "`"), { viewColumn: vscode_1.ViewColumn.Beside });
+        var text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;");
+        panel.webview.html = md.render(text, process.env);
+    }
+    catch (e) {
+        console.warn(e);
+        vscode_1.window.showWarningMessage("Executing mqs failed. Please check if setting 'mqs.mqsExecutablePath' is valid.");
+    }
+    (0, exports.refreshCodeLensCallback)();
+};
+exports.reviewQuestionCallback = reviewQuestionCallback;

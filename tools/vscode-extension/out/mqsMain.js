@@ -18,7 +18,7 @@ function activate(context) {
     statusbarItem.show();
     // set commands for codelens
     context.subscriptions.push(vscode.commands.registerCommand("mqs.solveQuestion", cmd.solveQuestionCallback));
-    context.subscriptions.push(vscode.commands.registerCommand("mqs.refreshCodeLens", cmd.refreshCodeLensCallback));
+    context.subscriptions.push(vscode.commands.registerCommand("mqs.reviewQuestion", cmd.reviewQuestionCallback));
     // set and subscribe codelens
     cmd.refreshCodeLensCallback();
     context.subscriptions.push(cmd.codelensDisposable);

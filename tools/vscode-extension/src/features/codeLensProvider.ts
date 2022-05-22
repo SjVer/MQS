@@ -16,9 +16,11 @@ function createMQSSolveCommand(uri: Uri, name: string): Command {
 
 function createMQSReviewCommand(uri: Uri, name: string, correct: boolean): Command {
 	return {
-		title: `Review result (${correct ? "correct" : "incorrect"})`,
+		// title: `Review result (${correct ? "correct" : "incorrect"})`,
+		title: `Review result (${correct})`,
 		tooltip: `Review the result of question "?${name}"`,
-		command: null
+		command: "mqs.reviewQuestion",
+		arguments: [uri, name],
 	};
 }
 

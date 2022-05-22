@@ -51,9 +51,11 @@ function createMQSSolveCommand(uri, name) {
 }
 function createMQSReviewCommand(uri, name, correct) {
     return {
-        title: "Review result (".concat(correct ? "correct" : "incorrect", ")"),
+        // title: `Review result (${correct ? "correct" : "incorrect"})`,
+        title: "Review result (".concat(correct, ")"),
         tooltip: "Review the result of question \"?".concat(name, "\""),
-        command: null
+        command: "mqs.reviewQuestion",
+        arguments: [uri, name]
     };
 }
 var MQSCodeLensProvider = /** @class */ (function () {

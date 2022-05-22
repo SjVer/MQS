@@ -40,29 +40,29 @@
     ],
     "configuration": [
       {
-          "title": "MQS",
-          "properties": {
-              "mqs.mqsExecutablePath": {
-                  "type": "string",
-                  "default": "/usr/bin/mqs",
-                  "description": "The path to the MQS executable"
-              },
-              "mqs.mqsQuickInfoExecutablePath": {
-                  "type": "string",
-                  "default": "/usr/bin/mqs-quickinfo",
-                  "description": "The path to the MQS QuickInfo executable"
-              },
-              "mqs.logDebugInfo": {
-                  "type": "boolean",
-                  "default": false,
-                  "description": "Log debugging information to the console (requires reload)"
-              },
-              "mqs.enableLanguageFeatures": {
-                  "type": "boolean",
-                  "default": true,
-                  "description": "Enable the language features of the MQS-Lang extension (requires reload)"
-              }
+        "title": "MQS",
+        "properties": {
+          "mqs.mqsExecutablePath": {
+            "type": "string",
+            "default": "/usr/bin/mqs",
+            "description": "The path to the MQS executable"
+          },
+          "mqs.mqsQuickInfoExecutablePath": {
+            "type": "string",
+            "default": "/usr/bin/mqs-quickinfo",
+            "description": "The path to the MQS QuickInfo executable"
+          },
+          "mqs.logDebugInfo": {
+            "type": "boolean",
+            "default": false,
+            "description": "Log debugging information to the console (requires reload)"
+          },
+          "mqs.enableLanguageFeatures": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable the language features of the MQS-Lang extension (requires reload)"
           }
+        }
       }
     ]
   },
@@ -78,18 +78,18 @@
     "grammar": "node build-grammar.js"
   },
   "devDependencies": {
+    "@types/js-yaml": "latest",
+    "@types/markdown-it": "^12.2.3",
     "@types/node": "16.x",
     "@types/vscode": "^1.51.0",
-    "@types/js-yaml": "latest",
-    "@types/which": "^2.0.0",
     "js-yaml": "latest",
     "plist": "latest"
-  },
-  "dependencies": {
-    "which": "^2.0.2"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/SjVer/MQS.git"
+  },
+  "dependencies": {
+    "markdown-it": "^13.0.1"
   }
 }
