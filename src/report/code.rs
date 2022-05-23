@@ -78,7 +78,7 @@ macro_rules! fmt_error_msg {
 	(CannotExplainCode $code:expr) => (format!("cannot explain invalid error code {:?}", $code));
 	(CannotReview $what:expr, $name:expr) => (format!("cannot review {} '{}'", $what, $name));
 	(FailedToResolve $name:expr, $why:expr) => (format!("failed to resolve section '{}': {}", $name, $why));
-	(FailedToApply $name:expr) => (format!("failed to apply section '{}'", $name));
+	(FailedToApply $name:expr) => (format!("failed to apply section '{}' due to an error", $name));
 	(InvalidStepNumber $step:expr, $len:expr) => (format!("invalid step number '{}' not in range [1-{}]", $step, $len));
 	
 	(NoError) => ("there is no error, why did this appear?");

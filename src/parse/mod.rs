@@ -6,7 +6,7 @@ use ast::*;
 use apply::{Path, PathPrefix, STDLIB_DIR};
 use crate::{
 	SOURCES,
-	report::{error, Report},
+	report::{error, Report, code::ErrorCode},
 	lex::{Lexer, token::{*, TokenKind::*}},
 	runtime::question::Question as rQuestion,
 	new_formatted_error
@@ -212,6 +212,7 @@ impl Parser {
 			new_formatted_error!(FailedToApply path.to_string())
 				.with_quote(token.span, None::<String>)
 				.dispatch();
+			self.had_error = true;
 		}
 		
 		Ok(())
