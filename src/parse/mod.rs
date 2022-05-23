@@ -161,6 +161,8 @@ impl Parser {
 	}
 
 	fn apply(&mut self) -> PResult<()> {
+		let token = self.current();
+
 		// get optional prefix
 		let mut path = Path::new(
 			if self.matches(&[Divide]) { PathPrefix::Root }
@@ -183,7 +185,12 @@ impl Parser {
 		// find file
 		let fspath = match path.find_file() {
 			Ok(p) => p,
-			Err(why) => { return Err(new_formatted_error!(CannotApply path.to_string(), why)); },
+			Err(why) => {
+				return Err(
+					new_formatted_error!(FailedToResolve path.to_string(), why)
+						.with_quote(token.span, None::<String>)
+				);
+			},
 		};
 
 		// get source
@@ -199,9 +206,13 @@ impl Parser {
 
 		// lex and parse
 		let tokens = Lexer::new(fspath, src).lex();
-        if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
-	        self.context.add_section(path.get_ident(), c);
-        }
+		if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
+			self.context.add_section(path.get_ident(), c);
+		} else {
+			new_formatted_error!(FailedToApply path.to_string())
+				.with_quote(token.span, None::<String>)
+				.dispatch();
+		}
 		
 		Ok(())
 	}

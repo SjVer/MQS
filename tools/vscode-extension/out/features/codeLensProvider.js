@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 exports.MQSCodeLensProvider = void 0;
-var commands_1 = require("./commands");
+var quickinfo_1 = require("../utils/quickinfo");
 var questionRegex = /(?:^|\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm;
 var commentStartRegex = /--\*(?!.*\*--)/gm;
 var commentEndRegex = /\*--/gm;
@@ -68,7 +68,7 @@ var MQSCodeLensProvider = /** @class */ (function () {
                 switch (_c.label) {
                     case 0:
                         lenses = [];
-                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.Json, "get-questions", document.uri.fsPath)];
+                        return [4 /*yield*/, (0, quickinfo_1.quickInfo)(quickinfo_1.QuickInfoMode.Json, "get-questions", document.uri.fsPath)];
                     case 1:
                         questions = _c.sent();
                         _a = [];
@@ -86,10 +86,10 @@ var MQSCodeLensProvider = /** @class */ (function () {
                             range: line.range,
                             command: createMQSSolveCommand(document.uri, name)
                         });
-                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.ExitCode, "can-review-question", document.uri.fsPath, name)];
+                        return [4 /*yield*/, (0, quickinfo_1.quickInfo)(quickinfo_1.QuickInfoMode.ExitCode, "can-review-question", document.uri.fsPath, name)];
                     case 3:
                         if (!((_c.sent()) === 0)) return [3 /*break*/, 5];
-                        return [4 /*yield*/, (0, commands_1.quickInfo)(commands_1.QuickInfoMode.ExitCode, "question-is-true", document.uri.fsPath, name)];
+                        return [4 /*yield*/, (0, quickinfo_1.quickInfo)(quickinfo_1.QuickInfoMode.ExitCode, "question-is-true", document.uri.fsPath, name)];
                     case 4:
                         is_correct = (_c.sent()) === 0;
                         lenses.push({

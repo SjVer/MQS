@@ -4,6 +4,7 @@ exports.activate = void 0;
 var vscode = require("vscode");
 var child_process_1 = require("child_process");
 var cmd = require("./features/commands");
+var validationProvider_1 = require("./features/validationProvider");
 function activate(context) {
     if (!vscode.workspace.getConfiguration("mqs").get("enableLanguageFeatures"))
         return;
@@ -16,11 +17,14 @@ function activate(context) {
     catch (error) { }
     statusbarItem.text = output.replace("mqs ", "MQS: ");
     statusbarItem.show();
-    // set commands for codelens
+    // set codelens and validator
+    cmd.refreshCodeLensCallback();
+    new validationProvider_1["default"]().activate(context.subscriptions);
+    // subscribe commands/callbacks
     context.subscriptions.push(vscode.commands.registerCommand("mqs.solveQuestion", cmd.solveQuestionCallback));
     context.subscriptions.push(vscode.commands.registerCommand("mqs.reviewQuestion", cmd.reviewQuestionCallback));
-    // set and subscribe codelens
-    cmd.refreshCodeLensCallback();
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(cmd.refreshCodeLensCallback));
+    // subscribe providers
     context.subscriptions.push(cmd.codelensDisposable);
 }
 exports.activate = activate;

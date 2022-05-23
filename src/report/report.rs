@@ -1,11 +1,10 @@
-use crate::{get_cli_arg, get_lint_mode, lint_mode_is};
+use crate::{get_cli_arg, lint_mode_is};
 use crate::lex::span::Span;
 use crate::info::{report::{NOTE_LABEL, CODE_PREFIX}, app::NAME};
 use super::code::ErrorCode;
-
 use std::io::{Write, stderr};
 use yansi::{Color, Paint};
-use json::{object, stringify_pretty, JsonValue};
+use json::{object, JsonValue};
 
 
 #[derive(Debug)]
@@ -216,7 +215,7 @@ impl Report {
 
 			// dont output useless errors
 			if let Some(code) = &self.code {
-				if !code.is_useful() { return; }
+				if !code.is_useful() && self.quote.is_none() { return; }
 			}
 
 			// location and length (default values)
@@ -250,16 +249,15 @@ impl Report {
 				JsonValue::Boolean(false)
 			};
 
-			// create the json object and "print" it
-			println!("{},", stringify_pretty(object!{
-					"message" => self.message.as_str(),
-					"location" => location,
-					"length" => length,
-					"severity" => self.severity.to_string(),
-					"code" => code,
-					"related" => related
-				}, 4)
-			);
+			// create the json object
+			super::lint::append(object!{
+				"message" => self.message.as_str(),
+				"location" => location,
+				"length" => length,
+				"severity" => self.severity.to_string(),
+				"code" => code,
+				"related" => related
+			});
 		} else {
 			// check if we actually want output
 			if get_cli_arg!(quiet) { return; }

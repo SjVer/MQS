@@ -1,35 +1,16 @@
-pub mod lex;
-pub mod object;
-pub mod parse;
-pub mod report;
-pub mod runtime;
-pub mod cli;
-pub mod info;
+use mqs::*;
 
 use lex::Lexer;
 use parse::Parser; 
 use object::{obj_filename, {dis::Disassembler, asm::Assembler}};
-use report::code::ErrorCode;
-use cli::{CLI_ARGS, LintMode, claperr};
-
+use report::{code::ErrorCode, lint};
+use cli::{CLI_ARGS, claperr};
 use std::{io::{Write, stderr}, path::PathBuf};
 use regex::Regex;
 
 pub fn exit(code: i32) {
-    finish_lint();
+    lint::finish_lint();
     std::process::exit(code);
-}
-
-fn prepare_lint() {
-    if lint_mode_is!(Diag) {
-        println!("[");
-    }
-}
-
-fn finish_lint() {
-    if lint_mode_is!(Diag) {
-        println!("]");
-    }
 }
 
 fn do_review(objfile: PathBuf, srcfile: String, error: report::Report) {
@@ -118,7 +99,7 @@ fn do_file() {
 fn main() {
     // parse cli args
     cli::setup();
-    prepare_lint();
+    lint::prepare_lint();
 
     if let Some(code) = get_cli_arg!(explain) {
         // explain error
@@ -158,5 +139,5 @@ fn main() {
         else { do_file(); }
     }
 
-    finish_lint();
+    lint::finish_lint();
 }

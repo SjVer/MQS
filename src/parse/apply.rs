@@ -37,17 +37,17 @@ impl Path {
 		self.segments.push(segment.to_string());
 	}
 
-	pub fn find_file(&self) -> Result<String, &str> {
+	pub fn find_file(&self) -> Result<String, String> {
 		let mut path = match self.prefix {
 			PathPrefix::Root => {
 				// find current dir and pop until just root is left
 				let pwd = match current_dir() {
 					Ok(dir) => dir,
-					Err(_) => { return Err("could not find root directory"); },
+					Err(_) => { return Err(String::from("could not find root directory")); },
 				};
 				let mut pwd = match canonicalize(pwd) {
 					Ok(dir) => dir,
-					Err(_) => { return Err("could not find root directory"); },
+					Err(_) => { return Err(String::from("could not find root directory")); },
 				};
 				while pwd.pop() {}
 				pwd
@@ -55,13 +55,13 @@ impl Path {
 			PathPrefix::Home => {
 				match home_dir() {
 					Some(dir) => dir,
-					None => { return Err("could not find home directory"); },
+					None => { return Err(String::from("could not find home directory")); },
 				}
 			},
 			PathPrefix::Work => {
 				match current_dir() {
 					Ok(dir) => dir,
-					Err(_) => { return Err("could not find working directory"); },
+					Err(_) => { return Err(String::from("could not find working directory")); },
 				}
 			},
 			PathPrefix::None => PathBuf::from(STDLIB_DIR),
@@ -71,7 +71,13 @@ impl Path {
 			path.push(segment);
 		}
 
-		Ok(path.display().to_string() + ".mqs")
+		path.set_extension("mqs");
+
+		if path.exists() {
+			Ok(path.display().to_string())
+		} else {
+			Err(format!("file '{}' not found.", path.display()))
+		}
 	}
 
 	pub fn get_ident(&self) -> String {

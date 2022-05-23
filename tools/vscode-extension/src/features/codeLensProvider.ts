@@ -1,5 +1,5 @@
 import { CodeLensProvider, TextDocument, CodeLens, Command, Uri } from "vscode";
-import { quickInfo, QuickInfoMode } from './commands';
+import { quickInfo, QuickInfoMode } from '../utils/quickinfo';
 
 const questionRegex = /(?:^|\s*)\?\s*([a-zA-Z_][a-zA-Z0-9_]*)?/gm; 
 const commentStartRegex = /--\*(?!.*\*--)/gm;

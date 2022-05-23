@@ -10,17 +10,6 @@ macro_rules! get_cli_arg {
     ($field:ident) => ( unsafe { crate::CLI_ARGS.clone().unwrap().$field } )
 }
 
-#[macro_export]
-macro_rules! get_lint_mode {
-    () => (get_cli_arg!(lint).unwrap_or(crate::cli::LintMode::None))
-}
-
-#[macro_export]
-macro_rules! lint_mode_is {
-    ($mode:ident) => (get_lint_mode!() == crate::LintMode::$mode)
-}
-
-
 /// struct containing arguments from cli
 #[derive(Parser, Default, Clone, Debug)]
 #[clap(version, about, long_about = cli::DESCRIPTION)]

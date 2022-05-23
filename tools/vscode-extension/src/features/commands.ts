@@ -1,33 +1,11 @@
-import { spawnSync } from 'child_process';
 import { Disposable, languages, Uri, ViewColumn, window, workspace, MarkdownString } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
+import { spawnSync } from 'child_process';
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
 
-const mqsQuickInfoExecutable = workspace.getConfiguration('mqs').get<string>("mqsQuickInfoExecutablePath");
 const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutablePath");
-
-export enum QuickInfoMode {
-	ExitCode,
-	Json,
-}
-
-export async function quickInfo(mode: QuickInfoMode, command: string, ...args: any[]): Promise<number | object> {
-	try {
-		let cli_args = [command].concat(args);
-		let r = spawnSync(mqsQuickInfoExecutable, cli_args, { encoding: 'utf-8', shell: true });
-
-		switch (mode) {
-			case QuickInfoMode.ExitCode: return r.status ?? 0;
-			case QuickInfoMode.Json: return JSON.parse(r.stdout) ?? {}; 
-		}
-
-	} catch (e) {
-		console.warn(e);
-		window.showWarningMessage(`Executing mqs-quickinfo failed. Please check if setting 'mqs.mqsQuickInfoExecutablePath' is valid.`)
-	}
-}
 
 // refreshes codelens
 export const refreshCodeLensCallback = () => {
@@ -61,14 +39,18 @@ export const reviewQuestionCallback = (uri: Uri, name: string) => {
 		}
 
 		
-		// prepare stdout for markdown-to-html translation
-		let text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, (substr, ...args) => {
-            return `<pre>\`${args[0]}\`</pre>`;
-		});
+		// prepare stdout html view
+		let text = "<pre>" + r.stdout.trim() + "</pre>";
+		// let text = r.stdout.trim()
+		// 	.replaceAll('\n', " \\\n")
+		// 	.replaceAll("    ", "&emsp;&emsp;")
+		// 	.replaceAll(/\`(.*)\`/g, (substr, ...args) => {
+		// 		return `<pre>\`${args[0]}\`</pre>`;
+		// 	});
 		
 		// create webview
 		const panel = window.createWebviewPanel("markdown.preview", `Review of \`?${name}\``, { viewColumn: ViewColumn.Beside });
-		panel.webview.html = md.render(text, process.env);
+		panel.webview.html = text;
 
 	} catch (e) {
 		console.warn(e);

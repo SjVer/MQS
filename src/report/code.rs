@@ -13,8 +13,9 @@ pub enum ErrorCode {
 	CouldNotCompile,
 	CouldNotReview,
 	CannotExplainCode,
-	CannotApply,
 	CannotReview,
+	FailedToResolve,
+	FailedToApply,
 	InvalidStepNumber,
 
 	NoError = 0,
@@ -33,7 +34,6 @@ pub enum ErrorCode {
 	AlreadyDefined,
 	UseOfUndefined,
 	DuplicateParameter,
-	FailedToResModule,
 
 	_D = 300, // disassembly-error codes
 	MissingData,
@@ -76,12 +76,13 @@ macro_rules! fmt_error_msg {
 	(CouldNotCompile $file:expr) => (format!("could not compile '{}' due to previous error", $file));
 	(CouldNotReview $file:expr) => (format!("could not review '{}' due to previous error", $file));
 	(CannotExplainCode $code:expr) => (format!("cannot explain invalid error code {:?}", $code));
-	(CannotApply $name:expr, $why:expr) => (format!("cannot apply section '{}': {}", $name, $why));
 	(CannotReview $what:expr, $name:expr) => (format!("cannot review {} '{}'", $what, $name));
+	(FailedToResolve $name:expr, $why:expr) => (format!("failed to resolve section '{}': {}", $name, $why));
+	(FailedToApply $name:expr) => (format!("failed to apply section '{}'", $name));
 	(InvalidStepNumber $step:expr, $len:expr) => (format!("invalid step number '{}' not in range [1-{}]", $step, $len));
 	
 	(NoError) => ("there is no error, why did this appear?");
-
+	
 	(UnexpectedChar $chr:expr) => (format!("unexpected character {:?}", $chr));
 	(InvalidDigit $chr:expr, $base:expr, $t:expr) => (format!("invalid digit {:?} in {} {}", $chr, $base, $t));
 
@@ -94,7 +95,6 @@ macro_rules! fmt_error_msg {
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));
 	(DuplicateParameter $param:expr) => (format!("duplicate parameter `{}`", $param));
-	(FailedToResModule $mod:expr) => (format!("failed to resolve module `{}`", $mod));
 
 	(MissingData) => ("missing data");
 	(InvalidData) => ("invalid data");

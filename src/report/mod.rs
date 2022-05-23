@@ -1,5 +1,6 @@
 mod report;
 pub mod code;
+pub mod lint;
 
 pub use report::Report;
 use report::Severity;
