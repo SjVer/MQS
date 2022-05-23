@@ -1,32 +1,12 @@
 import { spawnSync } from 'child_process';
 import { Disposable, languages, Uri, ViewColumn, window, workspace, MarkdownString } from 'vscode';
 import { MQSCodeLensProvider } from "./codeLensProvider";
-import * as MarkDownIt from "markdown-it";
-import { Highlighter } from 'shiki';
 
 export let codelensDisposable: Disposable;
 const codeLensProvider: MQSCodeLensProvider = new MQSCodeLensProvider();
 
 const mqsQuickInfoExecutable = workspace.getConfiguration('mqs').get<string>("mqsQuickInfoExecutablePath");
 const mqsExecutable = workspace.getConfiguration('mqs').get<string>("mqsExecutablePath");
-
-const md = new MarkDownIt({ breaks: true, langPrefix: "mqs-highlighted-", highlight: mdHighlighter });
-function mdHighlighter(str: string, lang: string, attrs: string): string {
-	// str is contents, lang is language
-	if(lang != "mqs") return;
-
-	shiki.getHighlighter({
-		langs: [
-			{
-				id: 'mqs',
-				scopeName: 'source.mqs',
-				path: '../../syntaxes/mqs.generated.tmLanguage'
-			}
-		]
-	})
-		.then(highlighter => { return highlighter.codeToHtml(str, { lang: 'mqs' }) })
-		.else(() => { return ''; });
-}
 
 export enum QuickInfoMode {
 	ExitCode,
@@ -82,8 +62,8 @@ export const reviewQuestionCallback = (uri: Uri, name: string) => {
 
 		
 		// prepare stdout for markdown-to-html translation
-		let text = r.stdout.trim().replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, (substr, ...args) => {
-			return `\n\`\`\`mqs\n${args[0]}\`\`\`\n`;
+		let text = r.stdout.trim().replaceAll('\n', " \\\n").replaceAll("    ", "&emsp;&emsp;").replaceAll(/\`(.*)\`/g, (substr, ...args) => {
+            return `<pre>\`${args[0]}\`</pre>`;
 		});
 		
 		// create webview
