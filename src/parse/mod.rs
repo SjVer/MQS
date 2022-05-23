@@ -61,7 +61,6 @@ impl Parser {
         if self.check(kind) {
             Ok(self.advance())
         } else {
-			println!("{:?}", self.peek().kind);
 			Err(new_formatted_error!(ExpectedToken what.to_string())
 				.with_quote(self.peek().span, Some("unexpected token here"))
 			)
