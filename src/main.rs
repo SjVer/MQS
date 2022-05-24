@@ -90,7 +90,6 @@ fn do_file() {
 
     if let Err(r) = r() {
         r.dispatch();
-        // new_formatted_error!(CouldNotCompile &filename).dispatch();
         exit(1);
     }
 }

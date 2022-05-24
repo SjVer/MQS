@@ -6,21 +6,22 @@ use ast::*;
 use apply::{Path, PathPrefix, STDLIB_DIR};
 use crate::{
 	SOURCES,
-	report::{error, Report, code::ErrorCode},
+	report::{error, warning, Report},
 	lex::{Lexer, token::{*, TokenKind::*}},
 	runtime::question::Question as rQuestion,
 	new_formatted_error
 };
+use std::collections::HashMap;
 pub use context::Context;
 
 type PResult<T> = Result<T, Report>;
 
 pub struct Parser {
 	context: Context,
+	apply_tokens: HashMap<String, Token>,
 
 	had_error: bool,
 
-	// skip_newlines: bool,
 	next_token: usize,
 	tokens: Vec<Token>,
 }
@@ -126,7 +127,7 @@ impl Parser {
     }
 
     fn synchronize(&mut self, top_level: bool) {
-    	self.advance();
+    	// self.advance();
 
     	while !self.is_at_end() {
     		// if self.current().kind == Newline { return; }
@@ -206,14 +207,22 @@ impl Parser {
 		// lex and parse
 		let tokens = Lexer::new(fspath, src).lex();
 		if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
+			if self.context.has_section(path.get_ident()) {
+				warning(format!("application of section '{}' shadows previous application", path.get_ident()))
+					.with_quote(token.span.clone(), None::<String>)
+					.with_sub_quote(self.apply_tokens.get(&path.get_ident()).unwrap().span.clone(), "previous application here")
+					.dispatch();
+			}
+
 			self.context.add_section(path.get_ident(), c);
+			self.apply_tokens.insert(path.get_ident(), token);
 		} else {
 			new_formatted_error!(FailedToApply path.to_string())
 				.with_quote(token.span, None::<String>)
 				.dispatch();
 			self.had_error = true;
 		}
-		
+
 		Ok(())
 	}
 
@@ -432,8 +441,8 @@ impl Parser {
 	pub fn new() -> Self {
 		Self {
 			context: Context::new(),
+			apply_tokens: HashMap::new(),
 			had_error: false,
-			// skip_newlines: true,
 			next_token: 0,
 			tokens: vec![],
 		}

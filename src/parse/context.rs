@@ -18,4 +18,8 @@ impl Context {
 	pub fn add_section(&mut self, name: String, context: Self) {
 		self.sections.insert(name, context);
 	}
+
+	pub fn has_section(&mut self, name: String) -> bool {
+		self.sections.contains_key(&name)
+	}
 }

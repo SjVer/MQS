@@ -130,7 +130,7 @@ impl Report {
 	pub fn with_sub_quote(mut self, span: Span, message: impl ToString) -> Self {
 		self.sub_quotes.push(Quote{
 			span,
-			color: Color::White, 
+			color: Color::Unset, 
 			message: Some(message.to_string())
 		});
 		self
@@ -178,7 +178,7 @@ impl Report {
 
 	fn generate_quote(&self) -> String {
 		if let Some(quote) = &self.quote {
-			quote.to_string(!get_cli_arg!(compact) && !self.notes.is_empty())
+			quote.to_string(!get_cli_arg!(compact) && (!self.notes.is_empty() || !self.sub_quotes.is_empty()))
 		} else {
 			String::new()
 		}
