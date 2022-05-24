@@ -18,6 +18,7 @@ pub mod cli {
 	static_string!(ARG_REVIEW, "Review INFILE's last results");
 	static_string!(ARG_DIS, "Disassemble MQS object file OBJFILE");
 	static_string!(ARG_AT, "Review the given question (at a given step)");
+	static_string!(ARG_MUTE, "Mute all warnings");
 	static_string!(ARG_COMPACT, "Produce compact output");
 	static_string!(ARG_QUIET, "Hide all output");
 	static_string!(ARG_EXPLAIN, "Explain the given error code");
@@ -27,7 +28,11 @@ pub mod cli {
 }
 
 pub mod report {
-	static_string!(CODE_PREFIX, "E");
+	// static_string!(ECODE_PREFIX, "E");
+	// static_string!(WCODE_PREFIX, "W");
+	pub const ECODE_PREFIX: char = 'E';
+	pub const WCODE_PREFIX: char = 'W';
+
 	static_string!(ERROR_LABEL, "error");
 	static_string!(WARNING_LABEL, "warning");
 	static_string!(NOTE_LABEL, "note");

@@ -32,6 +32,9 @@ pub struct CliArgs {
 
 
 
+    #[clap(short, long, help = cli::ARG_MUTE)]
+    pub mute: bool,
+
     #[clap(short, long, help = cli::ARG_COMPACT)]
     pub compact: bool,
 
@@ -44,8 +47,8 @@ pub struct CliArgs {
     pub lint: Option<LintMode>,
 
 
-    #[clap(long, help = cli::ARG_EXPLAIN)]
-    pub explain: Option<u16>,
+    #[clap(long, help = cli::ARG_EXPLAIN, value_name = "CODE")]
+    pub explain: Option<String>,
 }
 
 pub fn set_cli_args_empty() {

@@ -1,9 +1,6 @@
 use num_enum::TryFromPrimitive;
 use convert_case::{Case, Casing};
-
-// pub trait Code {
-// 	fn to_string(&self) -> String;
-// }
+use crate::{info::report::ECODE_PREFIX, get_cli_arg};
 
 #[repr(i16)]
 #[derive(Debug, Clone, PartialEq, TryFromPrimitive)]
@@ -45,24 +42,34 @@ pub enum ErrorCode {
 	NonexistentString,
 }
 
-impl ErrorCode {
-	pub fn is_useful(&self) -> bool {
-		self.clone() as i16 >= 0
-	}
-
-	pub fn get_name(&self) -> String {
+impl super::ReportableCode for ErrorCode {
+	fn get_name(&self) -> String {
 		format!("{:?}", self).to_case(Case::Lower)
 	}
 
+	fn to_string(&self) -> String {
+		format!("{}{:#03}", ECODE_PREFIX, self.clone() as u16)
+	}
+
+	fn is_useful(&self) -> bool {
+		self.clone() as i16 >= 0
+	}
+
+	fn must_hide(&self) -> bool {
+		get_cli_arg!(quiet)		
+	}
+}
+
+impl ErrorCode {
 	pub fn get_type(&self) -> Option<&str> {
 		let rounded = (self.clone() as i16 as f32 / 100_f32).floor() * 100_f32;
 		match ErrorCode::try_from(rounded as i16) {
 			Err(_) => None,
 			Ok(c) => match c {
-				Self::_C => None,
-				Self::_L => Some("lexical"),
-				Self::_S => Some("syntax"),
-				Self::_D => Some("disassembly"),
+				Self::_C => Some("error"),
+				Self::_L => Some("lexical error"),
+				Self::_S => Some("syntax error"),
+				Self::_D => Some("disassembly error"),
 				_ => None
 			}
 		}

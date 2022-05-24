@@ -6,10 +6,11 @@ use ast::*;
 use apply::{Path, PathPrefix, STDLIB_DIR};
 use crate::{
 	SOURCES,
-	report::{error, warning, Report},
+	report::{error, Report},
 	lex::{Lexer, token::{*, TokenKind::*}},
 	runtime::question::Question as rQuestion,
-	new_formatted_error
+	new_formatted_error,
+	new_formatted_warning
 };
 use std::collections::HashMap;
 pub use context::Context;
@@ -127,7 +128,7 @@ impl Parser {
     }
 
     fn synchronize(&mut self, top_level: bool) {
-    	// self.advance();
+    	if !top_level { self.advance(); }
 
     	while !self.is_at_end() {
     		// if self.current().kind == Newline { return; }
@@ -208,7 +209,8 @@ impl Parser {
 		let tokens = Lexer::new(fspath, src).lex();
 		if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
 			if self.context.has_section(path.get_ident()) {
-				warning(format!("application of section '{}' shadows previous application", path.get_ident()))
+				// warning(format!("application of section '{}' shadows previous application", path.get_ident()))
+				new_formatted_warning!(ShadowingApplication path.get_ident())
 					.with_quote(token.span.clone(), None::<String>)
 					.with_sub_quote(self.apply_tokens.get(&path.get_ident()).unwrap().span.clone(), "previous application here")
 					.dispatch();
@@ -247,6 +249,7 @@ impl Parser {
 			name: ident,
 			theory: th,
 		});
+
 		Ok(())
 	}
 }
