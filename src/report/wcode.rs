@@ -6,7 +6,8 @@ use crate::{info::report::WCODE_PREFIX, get_cli_arg};
 #[derive(Debug, Clone, PartialEq, TryFromPrimitive)]
 pub enum WarningCode {
 	NoWarning = 0,
-	ShadowingApplication
+	RedefenitionOf,
+	ShadowingApplication,
 }
 
 impl super::ReportableCode for WarningCode {
@@ -28,5 +29,6 @@ impl super::ReportableCode for WarningCode {
 #[macro_export]
 macro_rules! fmt_warning_msg {
 	(NoWarning) => ("there is no warning, why did this appear?");
+	(RedefenitionOf $what:tt $name:expr) => (format!("redefenition of {} '{}'", $what, $name));
 	(ShadowingApplication $name:expr) => (format!("application of section '{}' shadows previous application", $name));
 }

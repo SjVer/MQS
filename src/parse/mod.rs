@@ -20,6 +20,7 @@ type PResult<T> = Result<T, Report>;
 pub struct Parser {
 	context: Context,
 	apply_tokens: HashMap<String, Token>,
+	vardef_tokens: HashMap<String, Token>,
 
 	had_error: bool,
 
@@ -45,6 +46,23 @@ macro_rules! theory_node {
 	($tok:expr => $kind:ident @t $($field:tt)*) => {
 		TheoryNode { token: $tok, item: TheoryItem::$kind ( $($field)* ) }
 	};
+}
+macro_rules! get_tok_span {
+	($self:ident $map:ident $ident:expr) => ($self.$map.get($ident).unwrap().span.clone());
+}
+
+// state stuff
+impl Parser {
+	fn add_section(&mut self, token: Token, ident: String, context: Context) {
+		if self.context.has_section(ident.clone()) {
+			new_formatted_warning!(ShadowingApplication &ident)
+				.with_quote(token.span.clone(), None::<String>)
+				.with_sub_quote(get_tok_span!(self apply_tokens &ident), "previous application here")
+				.dispatch();
+		}
+		self.context.add_section(ident.clone(), context);
+		self.apply_tokens.insert(ident.clone(), token);
+	}
 }
 
 // token stuff
@@ -127,8 +145,10 @@ impl Parser {
 		self.tokens[self.next_token - 1].clone()
     }
 
-    fn synchronize(&mut self, top_level: bool) {
-    	if !top_level { self.advance(); }
+    fn synchronize(&mut self) {
+    	// if !top_level { 
+			self.advance();
+		// }
 
     	while !self.is_at_end() {
     		// if self.current().kind == Newline { return; }
@@ -136,7 +156,7 @@ impl Parser {
             match self.peek().kind {
 
             	// top-level only
-                Apply | Identifier if top_level => { return; }
+                Apply | Identifier /* if top_level */ => { return; }
 
                 // declaration stuff
                 Variable | Function | Theorem | Conclusion | Question => { return; }
@@ -154,7 +174,9 @@ impl Parser {
 	fn top_level(&mut self) -> PResult<()> {
 		match self.advance().kind {
 			Apply => self.apply(),
-			Question => self.question() ,
+			Identifier => self.section(),
+			Variable => self.variable(),
+			Question => self.question(),
 			_ => Err(new_formatted_error!(ExpectedTopLevel)
 					.with_quote(self.current().span.clone(), None::<String>)
 				)
@@ -208,22 +230,54 @@ impl Parser {
 		// lex and parse
 		let tokens = Lexer::new(fspath, src).lex();
 		if let Ok(c) = Self::new().parse(path.to_string(), tokens) {
-			if self.context.has_section(path.get_ident()) {
-				// warning(format!("application of section '{}' shadows previous application", path.get_ident()))
-				new_formatted_warning!(ShadowingApplication path.get_ident())
-					.with_quote(token.span.clone(), None::<String>)
-					.with_sub_quote(self.apply_tokens.get(&path.get_ident()).unwrap().span.clone(), "previous application here")
-					.dispatch();
-			}
-
-			self.context.add_section(path.get_ident(), c);
-			self.apply_tokens.insert(path.get_ident(), token);
+			self.add_section(token, path.get_ident(), c);
 		} else {
 			new_formatted_error!(FailedToApply path.to_string())
 				.with_quote(token.span, None::<String>)
 				.dispatch();
 			self.had_error = true;
 		}
+
+		Ok(())
+	}
+
+	fn section(&mut self) -> PResult<()> {
+		let token = self.current();
+		let old_context = self.context.clone();
+		self.context = Context::new();
+
+		self.consume(LeftBrace, '{')?;
+		while !self.is_at_end() && !self.check(RightBrace) {
+			if let Err(r) = self.top_level() {
+				r.dispatch();
+				self.had_error = true;
+			}
+		}
+		self.consume(RightBrace, '}')?;
+		
+		self.context = old_context;
+		let ident = String::from(token.span.get_part().unwrap_or(""));
+		self.add_section(token, ident, self.context.clone());
+
+		Ok(())
+	}
+
+	fn variable(&mut self) -> PResult<()> {
+		let token = self.current();
+		let ident = self.consume(Identifier, "variable name")?
+			.span.get_part().unwrap_or("").to_string();
+		
+		self.consume(Define, ":=")?;
+		let expr = self.expression()?;
+
+		if self.context.has_variable(ident.clone()) {
+			new_formatted_warning!(RedefenitionOf "variable" ident)
+				.with_quote(token.span.clone(), None::<String>)
+				.with_sub_quote(get_tok_span!(self vardef_tokens &ident), "previous definition here")
+				.dispatch();
+		}
+		self.context.set_variable(ident.clone(), expr);
+		self.vardef_tokens.insert(ident, token);
 
 		Ok(())
 	}
@@ -425,6 +479,13 @@ impl Parser {
 				.parse::<f64>().unwrap();
 			Ok(expr_node!(token => Literal @t Literal::Float(floatval)))
 		}
+		else if self.matches(&[Identifier]) {
+			// TODO: functions
+			// if self.peek(LeftParen) {
+			// }
+			// else
+			self.finish_variable()
+		}
 		else if self.matches(&[LeftParen]) {
 			let expr = self.expression()?;
 			self.consume(TokenKind::RightParen, ")")?;
@@ -437,6 +498,14 @@ impl Parser {
 			)
 		}
 	}
+
+	fn finish_variable(&mut self) -> PResult<ExprNode> {
+		let ident = self.current().span.get_part().unwrap_or("");
+		if !self.context.has_variable(ident.to_string()) {
+			new_formatted_error!(UseOfUndefined "variable" ident)
+				.with_quote()
+		}
+	}
 }
 
 // public stuff
@@ -445,6 +514,7 @@ impl Parser {
 		Self {
 			context: Context::new(),
 			apply_tokens: HashMap::new(),
+			vardef_tokens: HashMap::new(),
 			had_error: false,
 			next_token: 0,
 			tokens: vec![],
@@ -459,7 +529,7 @@ impl Parser {
 			match self.top_level() {
 				Err(report) => {
 					report.dispatch();
-					self.synchronize(true);
+					self.synchronize();
 					self.had_error = true;
 				},
 				Ok(_) => (),

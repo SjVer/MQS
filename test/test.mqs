@@ -1,4 +1,7 @@
 #std
-#std
 
-?test := 1 + 2 ??
+my_section {
+	$x := 3
+}
+
+?test := 1 + x ??
