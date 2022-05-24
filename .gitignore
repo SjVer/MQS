@@ -1,3 +1,5 @@
 target/
 tools/vscode-extension/node_modules/
 tools/vscode-extension/out/
+Cargo.lock
+
