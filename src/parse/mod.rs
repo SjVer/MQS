@@ -18,7 +18,8 @@ pub use context::Context;
 type PResult<T> = Result<T, Report>;
 
 pub struct Parser {
-	context: Context,
+	context_stack: Vec<Context>,
+
 	apply_tokens: HashMap<String, Token>,
 	vardef_tokens: HashMap<String, Token>,
 
@@ -53,15 +54,32 @@ macro_rules! get_tok_span {
 
 // state stuff
 impl Parser {
+	fn current_context(&mut self) -> &mut Context {
+		// I'm not sure if this returns a mutable reference to the actual element
+		// rather than a clone of it or smth. Might cause a bug sooner or later.
+		let i = self.context_stack.len() - 1;
+		&mut self.context_stack[i]
+	}
+
 	fn add_section(&mut self, token: Token, ident: String, context: Context) {
-		if self.context.has_section(ident.clone()) {
+		if self.current_context().has_section(ident.clone()) {
 			new_formatted_warning!(ShadowingApplication &ident)
 				.with_quote(token.span.clone(), None::<String>)
 				.with_sub_quote(get_tok_span!(self apply_tokens &ident), "previous application here")
 				.dispatch();
 		}
-		self.context.add_section(ident.clone(), context);
+		self.current_context().add_section(ident.clone(), context);
 		self.apply_tokens.insert(ident.clone(), token);
+	}
+
+	fn push_context(&mut self) -> &mut Context {
+		self.context_stack.push(Context::new());
+		self.current_context()
+	}
+
+	fn pop_context(&mut self) -> Context {
+		//
+		self.context_stack.pop().unwrap_or(Context::new())
 	}
 }
 
@@ -134,14 +152,17 @@ impl Parser {
     }
 
     fn is_at_end(&mut self) -> bool {
+    	//
         self.peek().kind == TokenKind::EOF
     }
 
     fn peek(&mut self) -> Token {
+    	//
 		self.tokens[self.next_token].clone()
     }
 
     fn current(&mut self) -> Token {
+    	//
 		self.tokens[self.next_token - 1].clone()
     }
 
@@ -243,8 +264,7 @@ impl Parser {
 
 	fn section(&mut self) -> PResult<()> {
 		let token = self.current();
-		let old_context = self.context.clone();
-		self.context = Context::new();
+		self.push_context();
 
 		self.consume(LeftBrace, '{')?;
 		while !self.is_at_end() && !self.check(RightBrace) {
@@ -255,9 +275,9 @@ impl Parser {
 		}
 		self.consume(RightBrace, '}')?;
 		
-		self.context = old_context;
 		let ident = String::from(token.span.get_part().unwrap_or(""));
-		self.add_section(token, ident, self.context.clone());
+		let c = self.pop_context();
+		self.add_section(token, ident, c);
 
 		Ok(())
 	}
@@ -270,13 +290,13 @@ impl Parser {
 		self.consume(Define, ":=")?;
 		let expr = self.expression()?;
 
-		if self.context.has_variable(ident.clone()) {
+		if self.current_context().has_variable(ident.clone()) {
 			new_formatted_warning!(RedefenitionOf "variable" ident)
 				.with_quote(token.span.clone(), None::<String>)
 				.with_sub_quote(get_tok_span!(self vardef_tokens &ident), "previous definition here")
 				.dispatch();
 		}
-		self.context.set_variable(ident.clone(), expr);
+		self.current_context().set_variable(ident.clone(), expr);
 		self.vardef_tokens.insert(ident, token);
 
 		Ok(())
@@ -287,7 +307,7 @@ impl Parser {
 		let ident = if self.matches(&[Identifier]) {
 			self.current().span.get_part().unwrap().to_string()
 		} else {
-			self.context.questions.len().to_string()
+			self.current_context().questions.len().to_string()
 		};
 		let token = self.current();
 
@@ -298,7 +318,7 @@ impl Parser {
 		let th = self.theory()?;
 
 		// add question to context and Ok
-		self.context.questions.push(rQuestion{
+		self.current_context().questions.push(rQuestion{
 			token,
 			name: ident,
 			theory: th,
@@ -394,6 +414,7 @@ impl Parser {
 // expression stuff
 impl Parser {
 	fn expression(&mut self) -> PResult<ExprNode> {
+		//
 		self.equality()
 	}
 
@@ -500,10 +521,16 @@ impl Parser {
 	}
 
 	fn finish_variable(&mut self) -> PResult<ExprNode> {
-		let ident = self.current().span.get_part().unwrap_or("");
-		if !self.context.has_variable(ident.to_string()) {
-			new_formatted_error!(UseOfUndefined "variable" ident)
-				.with_quote()
+		let token = self.current();
+		let ident = token.span.get_part().unwrap_or("");
+
+		if !self.current_context().has_variable(ident.to_string()) {
+			Err(
+				new_formatted_error!(UseOfUndefined "variable" ident)
+					.with_quote(self.current().span, None::<String>)
+			)
+		} else {
+			// TODO: expr_node!()
 		}
 	}
 }
@@ -512,10 +539,13 @@ impl Parser {
 impl Parser {
 	pub fn new() -> Self {
 		Self {
-			context: Context::new(),
+			context_stack: Vec::new(),
+
 			apply_tokens: HashMap::new(),
 			vardef_tokens: HashMap::new(),
+
 			had_error: false,
+
 			next_token: 0,
 			tokens: vec![],
 		}
@@ -524,6 +554,8 @@ impl Parser {
 	pub fn parse(&mut self, filename: String, tokens: Vec<Token>) -> PResult<Context> {
 		self.tokens = tokens;
 		self.next_token = 0;
+
+		self.push_context();
 
 		while !self.is_at_end() {
 			match self.top_level() {
@@ -540,7 +572,7 @@ impl Parser {
 		if self.had_error {
 			Err(new_formatted_error!(CouldNotCompile &filename))
 		} else {
-			Ok(self.context.clone())
+			Ok(self.current_context().clone())
 		}
 	}
 }

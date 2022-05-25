@@ -57,6 +57,7 @@ pub enum ExprItem {
 	Unary		(Box<ExprNode>),
 	Power 		{ base: Box<ExprNode>, power: Box<ExprNode> },
 	Grouping	(Box<ExprNode>),
+	Variable	(Box<ExprNode>),
 	Literal		(Literal),
 }
 
@@ -71,10 +72,11 @@ pub trait ExprVisitor<T> {
 		match node.item {
 			ExprItem::Equality	{..} => self.visit_equality(node),
 			ExprItem::Term		{..} => self.visit_term(node),
-			ExprItem::Factor		{..} => self.visit_factor(node),
+			ExprItem::Factor	{..} => self.visit_factor(node),
 			ExprItem::Unary		(..) => self.visit_unary(node),
 			ExprItem::Power		{..} => self.visit_power(node),
 			ExprItem::Grouping	{..} => self.visit_grouping(node),
+			ExprItem::Variable	{..} => self.visit_variable(node),
 			ExprItem::Literal	{..} => self.visit_literal(node),
 		}
 	}
@@ -85,5 +87,6 @@ pub trait ExprVisitor<T> {
 	fn visit_unary(&mut self, node: &ExprNode) -> T;
 	fn visit_power(&mut self, node: &ExprNode) -> T;
 	fn visit_grouping(&mut self, node: &ExprNode) -> T;
+	fn visit_variable(&mut self, node: &ExprNode) -> T;
 	fn visit_literal(&mut self, node: &ExprNode) -> T;
 }

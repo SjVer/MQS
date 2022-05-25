@@ -1,7 +1,10 @@
 #std
 
+$x := 1
+
 my_section {
-	$x := 3
+	$y := 2
+    $x := 3
 }
 
 ?test := 1 + x ??
