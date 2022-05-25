@@ -1,5 +1,5 @@
 use super::span::Span;
-use crate::report::code::ErrorCode;
+use crate::report::ecode::ErrorCode;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TokenKind {

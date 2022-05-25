@@ -1,17 +1,30 @@
 mod report;
-pub mod code;
+pub mod ecode;
+pub mod wcode;
 pub mod lint;
 
-pub use report::Report;
+pub use {
+	report::Report,
+	ecode::ErrorCode,
+	wcode::WarningCode
+};
+
 use report::Severity;
 use crate::info::report::*;
 use yansi::Color;
 
-pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
+pub trait ReportableCode {
+	fn get_name(&self) -> String;
+	fn to_string(&self) -> String;
+	fn is_useful(&self) -> bool;
+	fn must_hide(&self) -> bool;
+}
+
+pub fn error(message: impl ToString, code: Option<ecode::ErrorCode>) -> Report {
 	let label;
 	
 	if matches!(code, Some(_)) && matches!(code.as_ref().unwrap().get_type(), Some(_)) {
-		label = format!("{} {}", code.as_ref().unwrap().get_type().unwrap(), ERROR_LABEL);
+		label = String::from(code.as_ref().unwrap().get_type().unwrap());
 	} else {
 		label = String::from(ERROR_LABEL);
 	}
@@ -22,7 +35,7 @@ pub fn error(message: impl ToString, code: Option<code::ErrorCode>) -> Report {
 
 		color: Color::Red,
 		severity: Severity::Error,
-		code,
+		code: if let Some(c) = code { Some(Box::from(c)) } else { None },
 
 		quote: None,
 		sub_quotes: vec![],
@@ -35,22 +48,32 @@ macro_rules! new_formatted_error {
 	($code:ident $($arg:tt)*) => {
 		crate::report::error(
 			crate::fmt_error_msg!($code $($arg)*),
-			Some(crate::report::code::ErrorCode::$code)
+			Some(crate::report::ecode::ErrorCode::$code)
 		)
 	};
 }
 
-pub fn warning(message: impl ToString) -> Report {
+pub fn warning(message: impl ToString, code: Option<wcode::WarningCode>) -> Report {
 	Report{
 		label: String::from(WARNING_LABEL),
 		message: message.to_string(),
 
 		color: Color::Yellow,
 		severity: Severity::Warning,
-		code: None,
+		code: if let Some(c) = code { Some(Box::from(c)) } else { None },
 
 		quote: None,
 		sub_quotes: vec![],
 		notes: vec![],
 	}
+}
+
+#[macro_export]
+macro_rules! new_formatted_warning {
+	($code:ident $($arg:tt)*) => {
+		crate::report::warning(
+			crate::fmt_warning_msg!($code $($arg)*),
+			Some(crate::report::wcode::WarningCode::$code)
+		)
+	};
 }

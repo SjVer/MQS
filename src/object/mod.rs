@@ -2,6 +2,11 @@ pub mod dis;
 pub mod asm;
 pub mod question;
 
+pub use {
+	dis::Disassembler,
+	asm::Assembler
+};
+
 use std::{
 	env::temp_dir,
 	path::{Path, PathBuf, MAIN_SEPARATOR},

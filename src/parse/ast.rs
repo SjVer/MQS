@@ -2,13 +2,13 @@ use crate::lex::token::Token;
 
 // ================ Theory ================
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TheoryNode {
 	pub token: Token,
 	pub item: TheoryItem
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TheoryItem {
 	Logical     { lhs: Box<TheoryNode>, rhs: Box<TheoryNode> },
 	Match       { lhs: Box<TheoryNode>, rhs: Box<TheoryNode> },
@@ -43,13 +43,13 @@ pub trait TheoryVisitor<T> {
 
 // ================= Expr =================
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ExprNode {
 	pub token: Token,
 	pub item: ExprItem,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum ExprItem {
 	Equality	{ lhs: Box<ExprNode>, rhs: Box<ExprNode> },
 	Term 		{ lhs: Box<ExprNode>, rhs: Box<ExprNode> },
@@ -60,7 +60,7 @@ pub enum ExprItem {
 	Literal		(Literal),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Literal {
 	Integer(u64),
 	Float(f64),

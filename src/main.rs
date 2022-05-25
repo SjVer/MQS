@@ -2,11 +2,17 @@ use mqs::*;
 
 use lex::Lexer;
 use parse::Parser; 
-use object::{obj_filename, {dis::Disassembler, asm::Assembler}};
-use report::{code::ErrorCode, lint};
+use object::{obj_filename, {Disassembler, Assembler}};
+use report::{ErrorCode, WarningCode, ReportableCode, lint};
+use info::report::{WCODE_PREFIX, ECODE_PREFIX};
 use cli::{CLI_ARGS, claperr};
 use std::{io::{Write, stderr}, path::PathBuf};
 use regex::Regex;
+
+#[macro_export]
+macro_rules! exp {
+    ($what:expr) => { $what.map_err(|_| {()}) };
+}
 
 pub fn exit(code: i32) {
     lint::finish_lint();
@@ -101,20 +107,34 @@ fn main() {
     lint::prepare_lint();
 
     if let Some(code) = get_cli_arg!(explain) {
-        // explain error
-        match ErrorCode::try_from(code as i16) {
-            Ok(e) => {
-                let t = match e.get_type() {
-                    Some(t) => format!(" ({} error)", t),
-                    None => String::new()
-                };
+        // explain code
+        let do_try = || -> Result<(), ()> {
+            let prefix = code.chars().nth(0).unwrap_or('_');
+            let rest = exp!(code.get(1..).unwrap_or("").parse::<i16>())?;
 
-                println!("error code E{}: {}{}", code, e.get_name(), t);
-            },
-            Err(_) => {
-                new_formatted_error!(CannotExplainCode code).dispatch();
-                exit(1);
-            },
+            match prefix {
+                ECODE_PREFIX => {
+                    let c = exp!(ErrorCode::try_from(rest))?;
+                    let t = match c.get_type() {
+                        Some(t) => format!(" ({})", t),
+                        None => String::new()
+                    };
+    
+                    println!("error code {}: {}{}", code.to_string(), c.get_name(), t);
+                },
+                WCODE_PREFIX => {
+                    let c = exp!(WarningCode::try_from(rest))?;
+                    println!("warning code {}: {}", code.to_string(), c.get_name());
+                }
+                _ => return Err(())
+            }
+
+            Ok(())
+        };
+
+        if let Err(_) = do_try() {
+            new_formatted_error!(CannotExplainCode code).dispatch();
+            exit(1);
         }
     }
     else if let Some(path) = get_cli_arg!(dis) {

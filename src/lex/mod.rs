@@ -6,7 +6,7 @@ use span::{Span, Location};
 use token::{Token, TokenKind::{self, *}};
 use source::Source;
 use crate::{fmt_error_msg, deref_source};
-use crate::report::code::ErrorCode;
+use crate::report::ecode::ErrorCode;
 use crate::runtime::types::Type;
 
 // pub type TokenIter<'a> = std::slice::Iter<'a, Token>;

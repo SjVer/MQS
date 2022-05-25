@@ -1,7 +1,6 @@
 use crate::{get_cli_arg, lint_mode_is};
 use crate::lex::span::Span;
-use crate::info::{report::{NOTE_LABEL, CODE_PREFIX}, app::NAME};
-use super::code::ErrorCode;
+use crate::info::{report::NOTE_LABEL, app::NAME};
 use std::io::{Write, stderr};
 use yansi::{Color, Paint};
 use json::{object, JsonValue};
@@ -106,7 +105,7 @@ pub struct Report {
 	
 	pub color: Color,
 	pub severity: Severity,
-	pub code: Option<ErrorCode>,
+	pub code: Option<Box<dyn super::ReportableCode>>,
 	
 	pub quote: Option<Quote>,
 	pub sub_quotes: Vec<Quote>,
@@ -149,8 +148,8 @@ impl Report {
 		// code if given
 		if let Some(code) = &self.code {
 			if code.is_useful() {
-				text.push_str(&self.color.paint(
-					format!("[{}{}]", CODE_PREFIX, code.clone() as u32))
+				let s = format!("[{}]", code.to_string());
+				text.push_str(&self.color.paint(s)
 					.bold().to_string());
 			}
 		}
@@ -210,6 +209,10 @@ impl Report {
 	}
 
 	pub fn dispatch(&self) {
+		if let Some(code) = &self.code {
+			if code.must_hide() { return; }
+		}
+
 		if lint_mode_is!(Diag) {
 			// output as json object
 
@@ -241,7 +244,7 @@ impl Report {
 			// code if given
 			let code = if let Some(code) = &self.code {
 				if code.is_useful() {
-					JsonValue::String(format!("{}{}", CODE_PREFIX, code.clone() as u32))
+					JsonValue::String(code.to_string())
 				} else {
 					JsonValue::Boolean(false)
 				}
@@ -259,9 +262,6 @@ impl Report {
 				"related" => related
 			});
 		} else {
-			// check if we actually want output
-			if get_cli_arg!(quiet) { return; }
-
 			let mut text = String::new();
 	
 			// label
