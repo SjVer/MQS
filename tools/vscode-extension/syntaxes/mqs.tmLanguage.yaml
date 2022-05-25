@@ -60,8 +60,9 @@ repository:
 
     patterns:
       - include: '#comment'
-      - include: '#expression'
+      - include: '#namespace'
       - include: '#declaration'
+      - include: '#expression'
       - include: '#invalid'
 
     end: \}
@@ -207,10 +208,12 @@ repository:
 
   variable:
     patterns:
-    - begin: ({{ident}})\s*(\()
+    - begin: (?:({{ident}})\s*(::)\s*)({{ident}})\s*(\()
       beginCaptures:
-        '1': { name: entity.name.function.mqs }
-        '2': { name: punctuation.parentheses.arguments.start.mqs }
+        '1': { name: entity.name.namespace.mqs }
+        '2': { name: keyword.operator.namespace.mqs }
+        '3': { name: entity.name.function.mqs }
+        '4': { name: punctuation.parentheses.arguments.start.mqs }
 
       patterns:
       - include: '#comment'
@@ -223,8 +226,11 @@ repository:
       endCaptures:
         '0': { name: punctuation.parentheses.arguments.start.mqs }
 
-    - match: '{{ident}}'
-      scope: variable.mqs
+    - match: '(?:({{ident}})\s*(::)\s*)*({{ident}})'
+      captures: 
+        '1': { name: entity.name.namespace.mqs }
+        '2': { name: keyword.operator.namespace.mqs }
+        '3': { name: variable.mqs }
 
   number:
     match: \b{{number}}\b

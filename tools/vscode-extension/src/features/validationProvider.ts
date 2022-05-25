@@ -117,6 +117,15 @@ export default class MQSValidationProvider {
 						});
 					});
 
+					// add notes
+					console.log(diagnostic.notes);
+					diagnostic.notes.forEach(note => {
+						vsdiagnostic.relatedInformation.push({
+							location: { uri: vscode.Uri.file(diagnostic.position.file), range: vsdiagnostic.range },
+							message: `note: ${note}`,
+						});
+					})
+
 					// set severity
 					if(diagnostic.type == "error") vsdiagnostic.severity = vscode.DiagnosticSeverity.Error;
 					else if(diagnostic.type == "warning") vsdiagnostic.severity = vscode.DiagnosticSeverity.Warning;

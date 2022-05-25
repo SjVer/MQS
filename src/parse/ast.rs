@@ -57,7 +57,7 @@ pub enum ExprItem {
 	Unary		(Box<ExprNode>),
 	Power 		{ base: Box<ExprNode>, power: Box<ExprNode> },
 	Grouping	(Box<ExprNode>),
-	Variable	(Box<ExprNode>),
+	Variable	{path: String, expr: Box<ExprNode>},
 	Literal		(Literal),
 }
 

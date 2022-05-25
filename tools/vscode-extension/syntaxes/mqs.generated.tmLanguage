@@ -127,11 +127,15 @@
           </dict>
           <dict>
             <key>include</key>
-            <string>#expression</string>
+            <string>#namespace</string>
           </dict>
           <dict>
             <key>include</key>
             <string>#declaration</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#expression</string>
           </dict>
           <dict>
             <key>include</key>
@@ -544,15 +548,25 @@
         <array>
           <dict>
             <key>begin</key>
-            <string>([A-Za-z_][A-Za-z_0-9]*'*)\s*(\()</string>
+            <string>(?:([A-Za-z_][A-Za-z_0-9]*'*)\s*(::)\s*)([A-Za-z_][A-Za-z_0-9]*'*)\s*(\()</string>
             <key>beginCaptures</key>
             <dict>
               <key>1</key>
               <dict>
                 <key>name</key>
-                <string>entity.name.function.mqs</string>
+                <string>entity.name.namespace.mqs</string>
               </dict>
               <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>keyword.operator.namespace.mqs</string>
+              </dict>
+              <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>entity.name.function.mqs</string>
+              </dict>
+              <key>4</key>
               <dict>
                 <key>name</key>
                 <string>punctuation.parentheses.arguments.start.mqs</string>
@@ -592,9 +606,25 @@
           </dict>
           <dict>
             <key>match</key>
-            <string>[A-Za-z_][A-Za-z_0-9]*'*</string>
-            <key>scope</key>
-            <string>variable.mqs</string>
+            <string>(?:([A-Za-z_][A-Za-z_0-9]*'*)\s*(::)\s*)*([A-Za-z_][A-Za-z_0-9]*'*)</string>
+            <key>captures</key>
+            <dict>
+              <key>1</key>
+              <dict>
+                <key>name</key>
+                <string>entity.name.namespace.mqs</string>
+              </dict>
+              <key>2</key>
+              <dict>
+                <key>name</key>
+                <string>keyword.operator.namespace.mqs</string>
+              </dict>
+              <key>3</key>
+              <dict>
+                <key>name</key>
+                <string>variable.mqs</string>
+              </dict>
+            </dict>
           </dict>
         </array>
       </dict>

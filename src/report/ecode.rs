@@ -101,6 +101,7 @@ macro_rules! fmt_error_msg {
 	(ExpectedExpression) => ("expected an expression");
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));
+	(UseOfUndefined $type:tt $name:expr, $section:expr) => (format!("use of undefined {} `{}` in section `{}`", $type, $name, $section));
 	(DuplicateParameter $param:expr) => (format!("duplicate parameter `{}`", $param));
 
 	(MissingData) => ("missing data");

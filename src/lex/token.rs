@@ -18,9 +18,9 @@ pub enum TokenKind {
 	RightParen,
 	Define,
 	Colon,
+	Access,
 	Dot,
-	DoubleDot,
-
+	
 	// theory operators
 	Or,
 	XOr,
@@ -51,6 +51,7 @@ pub enum TokenKind {
 	Type,
 	Integer,
 	Float,
+	Generic,
 	
 	// misc.
 	// Newline,
@@ -73,9 +74,8 @@ impl TokenKind {
 		match (c1, c2) {
 
 			(':', '=') => __somekind!(Define),
-
-			('.', '.') => __somekind!(DoubleDot),
-
+			(':', ':') => __somekind!(Access),
+			
 			('!', '|') => __somekind!(XOr),
 			('=', '=') => __somekind!(Matches),
 			('<', '>') => __somekind!(NotEquals),
@@ -84,8 +84,10 @@ impl TokenKind {
 			('>', '=') => __somekind!(GreaterEqual),
 			('<', '=') => __somekind!(LesserEqual),
 			('?', '?') => __somekind!(Exists),
-
+			
 			('/', '=') => __somekind!(NotEquals),
+
+			('.', '.') => __somekind!(Generic),
 			
 			_ => None
 		}

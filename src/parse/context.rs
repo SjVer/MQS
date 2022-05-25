@@ -23,15 +23,15 @@ impl Context {
 		self.sections.insert(name, context);
 	}
 
-	pub fn has_section(&mut self, name: String) -> bool {
-		self.sections.contains_key(&name)
+	pub fn get_section(&mut self, name: String) -> Option<&mut Context> {
+		self.sections.get_mut(&name)
 	}
 
 	pub fn set_variable(&mut self, name: String, expr: ExprNode) {
 		self.variables.insert(name, expr);
 	}
 
-	pub fn has_variable(&mut self, name: String) -> bool {
-		self.variables.contains_key(&name)
+	pub fn get_variable(&self, name: String) -> Option<&ExprNode> {
+		self.variables.get(&name)
 	}
 }

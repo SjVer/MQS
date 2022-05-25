@@ -61,17 +61,6 @@ impl Parser {
 		&mut self.context_stack[i]
 	}
 
-	fn add_section(&mut self, token: Token, ident: String, context: Context) {
-		if self.current_context().has_section(ident.clone()) {
-			new_formatted_warning!(ShadowingApplication &ident)
-				.with_quote(token.span.clone(), None::<String>)
-				.with_sub_quote(get_tok_span!(self apply_tokens &ident), "previous application here")
-				.dispatch();
-		}
-		self.current_context().add_section(ident.clone(), context);
-		self.apply_tokens.insert(ident.clone(), token);
-	}
-
 	fn push_context(&mut self) -> &mut Context {
 		self.context_stack.push(Context::new());
 		self.current_context()
@@ -80,6 +69,17 @@ impl Parser {
 	fn pop_context(&mut self) -> Context {
 		//
 		self.context_stack.pop().unwrap_or(Context::new())
+	}
+
+	fn add_section(&mut self, token: Token, ident: String, context: Context) {
+		if self.current_context().get_section(ident.clone()).is_some() {
+			new_formatted_warning!(ShadowingApplication &ident)
+				.with_quote(token.span.clone(), None::<String>)
+				.with_sub_quote(get_tok_span!(self apply_tokens &ident), "previous application here")
+				.dispatch();
+		}
+		self.current_context().add_section(ident.clone(), context);
+		self.apply_tokens.insert(ident.clone(), token);
 	}
 }
 
@@ -290,7 +290,7 @@ impl Parser {
 		self.consume(Define, ":=")?;
 		let expr = self.expression()?;
 
-		if self.current_context().has_variable(ident.clone()) {
+		if self.current_context().get_variable(ident.clone()).is_some() {
 			new_formatted_warning!(RedefenitionOf "variable" ident)
 				.with_quote(token.span.clone(), None::<String>)
 				.with_sub_quote(get_tok_span!(self vardef_tokens &ident), "previous definition here")
@@ -500,12 +500,8 @@ impl Parser {
 				.parse::<f64>().unwrap();
 			Ok(expr_node!(token => Literal @t Literal::Float(floatval)))
 		}
-		else if self.matches(&[Identifier]) {
-			// TODO: functions
-			// if self.peek(LeftParen) {
-			// }
-			// else
-			self.finish_variable()
+		else if self.check(Identifier) {
+			self.variable_or_function()
 		}
 		else if self.matches(&[LeftParen]) {
 			let expr = self.expression()?;
@@ -520,17 +516,53 @@ impl Parser {
 		}
 	}
 
-	fn finish_variable(&mut self) -> PResult<ExprNode> {
+	fn variable_or_function(&mut self) -> PResult<ExprNode> {
+		// get full path
+		let mut section = self.current_context().to_owned();
+		let mut path = Vec::<String>::new();
+
+		loop {
+			let token = self.consume(Identifier, "identifier")?;
+			let ident = token.span.get_part().unwrap_or("").to_string();
+
+			// done?
+			if !self.matches(&[Access]) {
+				path.push(ident.clone());
+				break; 
+			}
+
+			// this isn't the last part of the path but
+			// a sub-section, so check if it exists.
+			match section.get_section(ident.clone()) {
+				Some(c) => section = c.to_owned(),
+				None => return Err(
+					new_formatted_error!(UseOfUndefined "section" ident, path.join("::"))
+						.with_quote(token.span, None::<String>)
+						.with_note(format!("try importing or defining the section `{}::{}`", path.join("::"), ident))
+				)
+			}
+			
+			path.push(ident.clone());
+		}
+
+		// finish var or func
+		if self.check(LeftParen) { unreachable!() }
+		else { self.finish_variable(path, &section) }
+	}
+
+	fn finish_variable(&mut self, path: Vec<String>, section: &Context) -> PResult<ExprNode> {
 		let token = self.current();
 		let ident = token.span.get_part().unwrap_or("");
+		let expr = section.get_variable(ident.to_string());
 
-		if !self.current_context().has_variable(ident.to_string()) {
-			Err(
-				new_formatted_error!(UseOfUndefined "variable" ident)
-					.with_quote(self.current().span, None::<String>)
-			)
+		if let Some(e) = expr {
+			Ok(expr_node!(token => Variable @s path: path.join("::"), expr: b!(e.clone())))
 		} else {
-			// TODO: expr_node!()
+			Err(
+				new_formatted_error!(UseOfUndefined "variable" path.join("::"))
+					.with_quote(self.current().span, None::<String>)
+					.with_note(format!("consider defining the variable `{}`", path.join("::")))
+			)
 		}
 	}
 }

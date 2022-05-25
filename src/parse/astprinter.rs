@@ -175,6 +175,11 @@ impl ExprVisitor<String> for ExprPrinter {
 			}
 		} else { unreachable!() }
 	}
+
+	fn visit_variable(&mut self, node: &ExprNode) -> String {
+		if let ExprItem::Variable{ path, .. } = &node.item { path.to_string() }
+		else { unreachable!() }
+	}
 }
 
 impl ExprPrinter {

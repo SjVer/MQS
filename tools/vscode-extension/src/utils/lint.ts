@@ -14,7 +14,14 @@ export enum MQSLintType {
 
 export interface MQSPosition { file: string, line: number, column: number, length: number };
 export interface MQSDeclaration { position: MQSPosition };
-export interface MQSDiagnostics { diagnostics: { position: MQSPosition, message: string, code?: number, type: string, related: { position: MQSPosition, message: string }[] }[] };
+export interface MQSDiagnostics { diagnostics: { 
+	position: MQSPosition,
+	message: string,
+	code?: number,
+	type: string,
+	related: { position: MQSPosition, message: string }[],
+	notes: string[],
+}[] };
 export interface MQSSymbols { symbols: { identifier: string, return_type: string, parameters: string[], variadic: boolean }[] };
 
 let do_log: boolean = workspace.getConfiguration('mqs').get<boolean>('logDebugInfo');
@@ -117,6 +124,7 @@ export async function callMQSLint(document: TextDocument, type: MQSLintType, pos
 					code: error['code'],
 					type: error['severity'],
 					related: related,
+					notes: error['notes'],
 				});
 			});
 			log(result as any);

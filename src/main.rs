@@ -91,6 +91,9 @@ fn do_file() {
         let objf = obj_filename(filename.clone());
         Assembler::new().asm(&context, objf);
 
+        // temp
+        do_review(obj_filename(filename.clone()), filename, new_formatted_error!(NoError));
+
         Ok(())
     };
 

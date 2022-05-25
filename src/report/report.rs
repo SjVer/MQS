@@ -241,6 +241,10 @@ impl Report {
 				}).unwrap();
 			}
 
+			// notes
+			let mut notes = json::array![];
+			for n in &self.notes { notes.push(n.to_string()).unwrap(); }
+
 			// code if given
 			let code = if let Some(code) = &self.code {
 				if code.is_useful() {
@@ -259,7 +263,8 @@ impl Report {
 				"length" => length,
 				"severity" => self.severity.to_string(),
 				"code" => code,
-				"related" => related
+				"related" => related,
+				"notes" => notes,
 			});
 		} else {
 			let mut text = String::new();
