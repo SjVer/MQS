@@ -92,7 +92,9 @@ fn do_file() {
         Assembler::new().asm(&context, objf);
 
         // temp
-        do_review(obj_filename(filename.clone()), filename, new_formatted_error!(NoError));
+        if !lint_mode_is!(Diag) {
+            do_review(obj_filename(filename.clone()), filename, new_formatted_error!(NoError));
+        }
 
         Ok(())
     };

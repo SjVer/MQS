@@ -4,6 +4,7 @@
   "description": "MQS language extension",
   "version": "0.0.1",
   "publisher": "SjVer",
+  "icon": "./assets/icons/mqs.png",
   "author": {
     "email": "sjoerd@marsenaar.com",
     "name": "Sjoerd Vermeulen",
@@ -21,6 +22,10 @@
     "languages": [
       {
         "id": "mqs",
+        "icon": {
+          "dark": "./assets/icons/mqs_light.png",
+          "light": "./assets/icons/mqs_dark.png"
+        },
         "aliases": [
           "MQS",
           "mqs"

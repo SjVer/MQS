@@ -1,10 +1,11 @@
-# EvIr README
+# MQS Language Extension
 
-This is the syntax highlighting extension for EvIr. For more info go to [the github repository](https://github.com/SjVer/EvIr).
+This is the language extension for MQS. For more info go to [the github repository](https://github.com/SjVer/MQS).
 
 ## Features
 
 - Syntax highlighting
+- Live diagnostics
 
 ## Screenshots
 
