@@ -95,34 +95,36 @@ impl SQuestion {
 // markdown printing
 impl SQuestion {
 	fn print_markdown(&self) {
-		println!("### question: ?{}", self.name);
-		println!("&emsp;theory: `{}` \\", self.theory);
-		println!("&emsp;approach: \\");
+		println!("**question: *?{}***", self.name);
+		println!("&emsp;**theory:** ${}$ \\", self.theory);
+		// TODO: meaning
+		println!("&emsp;**approach:** \\");
 
 		for (i, s) in self.steps.iter().enumerate() {
 			println!("&emsp;&emsp;{}: {} \\", i + 1, s.description);
-			println!("&emsp;&emsp;&emsp;`{}` \\", s.process);
+			println!("&emsp;&emsp;&emsp;${}$ \\", s.process);
 		}
 		
 		println!("&emsp;&emsp;{} \\", self.conclusion);
-		println!("&emsp;answer: {} ({}) \\", self.answer, self.is_true);
-		println!("&emsp;steps tried: {}", self.steps_tried);
+		println!("&emsp;**answer:** {} ({}) \\", self.answer, self.is_true);
+		println!("&emsp;**steps tried:** {}", self.steps_tried);
 	}
 
 	fn print_at_markdown(&self, step: usize) {
-		println!("### question: ?{} (step {})", self.name, step);
-		println!("&emsp;theory: `{}` \\", self.theory);
+		println!("**question: *?{}*** (step {})", self.name, step);
+		println!("&emsp;**theory:** ${}$ \\", self.theory);
+		println!("&emsp;**step {}:** \\", step);
 
 		let step = &self.steps[step - 1];
 
-		println!("&emsp;state before step: \\");
-		println!("&emsp;&emsp;`{}` \\", step.state_before);
+		println!("&emsp;&emsp;state before step: \\");
+		println!("&emsp;&emsp;&emsp;${}$ \\", step.state_before);
 
-		println!("&emsp;step: {} \\", step.description);
-		println!("&emsp;&emsp;{} \\", step.process);
+		println!("&emsp;&emsp;step: {} \\", step.description);
+		println!("&emsp;&emsp;&emsp;${}$ \\", step.process);
 
-		println!("&emsp;state after step: \\");
-		println!("&emsp;&emsp;`{}`", step.state_after);
+		println!("&emsp;&emsp;state after step: \\");
+		println!("&emsp;&emsp;&emsp;${}$", step.state_after);
 	}
 }
 
