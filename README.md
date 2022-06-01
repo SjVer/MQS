@@ -18,7 +18,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 ?:= old => new
 ```
 
-### Example output
+### Example markdown output
 
 **question to solve: *?0*** \
 &emsp;**theory:** $\operatorname{old} \implies \operatorname{new}$ \
