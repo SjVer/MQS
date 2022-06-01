@@ -33,13 +33,22 @@ impl TheoryVisitor<String> for TheoryPrinter {
 	fn visit_logical(&mut self, node: &TheoryNode) -> String {
 		let this = match node.token.kind {
 			Or => "|",
-			XOr => "!|",
 			And => "&",
 			_ => unreachable!(),
 		};
 
 		let (lhs, rhs) = if_let_binary!(self node Logical => lhs rhs);
 		format!("{} {} {}", lhs, this, rhs)
+	}
+
+	fn visit_unary(&mut self, node: &TheoryNode) -> String {
+		let this = match node.token.kind {
+			Not => "~",
+			_ => unreachable!(),
+		};
+
+		let expr = if_let_single!(self node TheoryItem::Unary);
+		format!("{} {}", this, expr)
 	}
 
 	fn visit_match(&mut self, node: &TheoryNode) -> String {
@@ -57,11 +66,11 @@ impl TheoryVisitor<String> for TheoryPrinter {
 		let this = match node.token.kind {
 			DefEquals => "==",
 			DefNotEquals => "!=",
+			RoughlyEquals => "~=",
 			Greater => ">",
 			GreaterEqual => ">=",
 			Lesser => "<",
 			LesserEqual => "<=",
-			RoughlyEquals => "~",
 			_ => unreachable!(),
 		};
 
@@ -153,7 +162,7 @@ impl ExprVisitor<String> for ExprPrinter {
 			_ => unreachable!(),
 		};
 
-		let expr = if_let_single!(self node Unary);
+		let expr = if_let_single!(self node ExprItem::Unary);
 		format!("{}{}", this, expr)
 	}
 

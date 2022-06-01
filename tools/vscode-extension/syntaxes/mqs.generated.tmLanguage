@@ -473,15 +473,21 @@
           </dict>
           <dict>
             <key>match</key>
-            <string>&lt;&gt;</string>
+            <string>\||&amp;|~</string>
             <key>name</key>
-            <string>support.function.match.mqs</string>
+            <string>support.function.logical.mqs</string>
           </dict>
           <dict>
             <key>match</key>
-            <string>&lt;!</string>
+            <string>&lt;=&gt;</string>
             <key>name</key>
-            <string>support.function.not-match.mqs</string>
+            <string>support.function.implies.mqs</string>
+          </dict>
+          <dict>
+            <key>match</key>
+            <string>&lt;!&gt;</string>
+            <key>name</key>
+            <string>support.function.not-implies.mqs</string>
           </dict>
           <dict>
             <key>match</key>
@@ -497,7 +503,7 @@
           </dict>
           <dict>
             <key>match</key>
-            <string>\=|/=</string>
+            <string>\=|/=|~=</string>
             <key>name</key>
             <string>keyword.operator.comparison.mqs</string>
           </dict>

@@ -172,6 +172,8 @@ contexts:
       scope: keyword.definition.rewrite.mqs
 
     # question
+    - match: \||&|~
+      scope: support.function.logical.mqs
     - match: <=>
       scope: support.function.implies.mqs
     - match: <!>

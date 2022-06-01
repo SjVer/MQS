@@ -335,21 +335,9 @@ impl Parser {
 	}
 
 	fn or(&mut self) -> PResult<TheoryNode> {
-		let mut th = self.xor()?;
-
-		while self.matches(&[Or]) {
-			let tok = self.current();
-			let rhs = self.xor()?;
-			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
-		}
-
-		Ok(th)
-	}
-
-	fn xor(&mut self) -> PResult<TheoryNode> {
 		let mut th = self.and()?;
 
-		while self.matches(&[XOr]) {
+		while self.matches(&[Or]) {
 			let tok = self.current();
 			let rhs = self.and()?;
 			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
@@ -359,15 +347,25 @@ impl Parser {
 	}
 
 	fn and(&mut self) -> PResult<TheoryNode> {
-		let mut th = self.solveable()?;
+		let mut th = self.not()?;
 
 		while self.matches(&[And]) {
 			let tok = self.current();
-			let rhs = self.solveable()?;
+			let rhs = self.not()?;
 			th = theory_node!(tok => Logical @s lhs: b!(th), rhs: b!(rhs) );
 		}
 
 		Ok(th)
+	}
+
+	fn not(&mut self) -> PResult<TheoryNode> {
+		if self.matches(&[Not]) {
+			let tok = self.current();
+			let expr = self.not()?;
+			Ok(theory_node!(tok => Unary @t b!(expr)))
+		} else {
+			self.solveable()
+		}
 	}
 
 	fn solveable(&mut self) -> PResult<TheoryNode> {

@@ -11,6 +11,7 @@ pub struct TheoryNode {
 #[derive(Clone, Debug)]
 pub enum TheoryItem {
 	Logical     { lhs: Box<TheoryNode>, rhs: Box<TheoryNode> },
+	Unary     	(Box<TheoryNode>),
 	Match       { lhs: Box<TheoryNode>, rhs: Box<TheoryNode> },
 	Comparison  { lhs: Box<TheoryNode>, rhs: Box<TheoryNode> },
 	Divisible	{ expr: Box<TheoryNode>, divisor: Box<TheoryNode> },
@@ -23,6 +24,7 @@ pub trait TheoryVisitor<T> {
 	fn visit(&mut self, node: &TheoryNode) -> T {
 		match node.item {
 			TheoryItem::Logical		{..} => self.visit_logical(node),
+			TheoryItem::Unary		{..} => self.visit_unary(node),
 			TheoryItem::Match		{..} => self.visit_match(node),
 			TheoryItem::Comparison	{..} => self.visit_comparison(node),
 			TheoryItem::Divisible	{..} => self.visit_divisible(node),
@@ -33,6 +35,7 @@ pub trait TheoryVisitor<T> {
 	}
 	
 	fn visit_logical(&mut self, node: &TheoryNode) -> T;
+	fn visit_unary(&mut self, node: &TheoryNode) -> T;
 	fn visit_match(&mut self, node: &TheoryNode) -> T;
 	fn visit_comparison(&mut self, node: &TheoryNode) -> T;
 	fn visit_divisible(&mut self, node: &TheoryNode) -> T;

@@ -23,8 +23,8 @@ pub enum TokenKind {
 	
 	// theory operators
 	Or,
-	XOr,
 	And,
+	Not,
 	Implies,
 	NotImplies,
 	DefEquals,
@@ -114,8 +114,8 @@ impl TokenKind {
 				'.' => __somekind!(Dot),
 	
 				'|' => __somekind!(Or),
-				'~' => __somekind!(XOr),
 				'&' => __somekind!(And),
+				'~' => __somekind!(Not),
 				'>' => __somekind!(Greater),
 				'<' => __somekind!(Lesser),
 				'%' => __somekind!(Divisible),

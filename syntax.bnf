@@ -23,9 +23,9 @@ parameters		: '(' (IDENT annonation? (',' IDENT annonation?)*)? ')'
 annonation		: ':' TYPE
 
 theory			: or
-or				: xor ('|' xor)*
-xor				: and ('!|' and)*
-and				: solveable ('&' solveable)*
+or				: and ('|' and)*
+and				: not ('&' not)*
+not:			: '~' not | solveable
 solveable		: match | comparison | divisible | exists
 match			: atom ('<>' | '<!') atom
 comparison		: atom ('==' | '!=' | '~' | '>' | '>=' | '<' | '<=') atom
@@ -38,7 +38,7 @@ equality		: term (('=' | '/=') term)*
 term			: factor (('-' | '+') factor)*
 factor			: power (('/' | '*') power)*
 power			: unary ('^' power)?
-unary			: ('-') unary | primary
+unary			: '-' unary | primary
 primary			: INTEGER | FLOAT
 				| '(' expression ')'
 				| variable | call | builtin_call
