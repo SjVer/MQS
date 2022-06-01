@@ -19,6 +19,7 @@ pub mod cli {
 	static_string!(ARG_DIS, "Disassemble MQS object file OBJFILE");
 	static_string!(ARG_AT, "Review the given question (at a given step)");
 	static_string!(ARG_MUTE, "Mute all warnings");
+	static_string!(ARG_MARKDOWN, "Produce output in markdown form");
 	static_string!(ARG_COMPACT, "Produce compact output");
 	static_string!(ARG_QUIET, "Hide all output");
 	static_string!(ARG_EXPLAIN, "Explain the given error code");

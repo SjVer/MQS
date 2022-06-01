@@ -467,6 +467,12 @@
           </dict>
           <dict>
             <key>match</key>
+            <string>-&gt;</string>
+            <key>name</key>
+            <string>keyword.definition.rewrite.mqs</string>
+          </dict>
+          <dict>
+            <key>match</key>
             <string>&lt;&gt;</string>
             <key>name</key>
             <string>support.function.match.mqs</string>
@@ -650,9 +656,9 @@
             <key>name</key>
             <string>comment.block.mqs</string>
             <key>begin</key>
-            <string>--\*</string>
+            <string>---</string>
             <key>end</key>
-            <string>\*--</string>
+            <string>---</string>
           </dict>
           <dict>
             <key>name</key>

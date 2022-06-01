@@ -295,8 +295,6 @@ impl Report {
 
 		if lint_mode_is!(Diag) {
 			self.dispatch_lint();
-		} else if get_cli_arg!(markdown) {
-			self.dispatch_markdown();
 		} else {
 			self.dispatch_normal();
 		}

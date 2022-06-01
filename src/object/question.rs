@@ -1,4 +1,4 @@
-use crate::new_formatted_error;
+use crate::{new_formatted_error, get_cli_arg};
 
 pub type StringCollection = Vec<String>;
 pub type StringIndex = usize;
@@ -58,8 +58,9 @@ impl IQuestion {
 	}
 }
 
+// normal printing
 impl SQuestion {
-	pub fn print(&self) {
+	fn print_normal(&self) {
 		println!("question: ?{}", self.name);
 		println!("{}theory: `{}`", TAB, self.theory);
 		println!("{}approach:", TAB);
@@ -74,12 +75,7 @@ impl SQuestion {
 		println!("{}steps tried: {}", TAB, self.steps_tried);
 	}
 
-	pub fn print_at(&self, step: usize) {
-		if step < 1 || step > self.steps.len() {
-			new_formatted_error!(InvalidStepNumber step, self.steps.len()).dispatch();
-			crate::exit(1);
-		}
-
+	fn print_at_normal(&self, step: usize) {
 		println!("question: ?{} (step {})", self.name, step);
 		println!("{}theory: `{}`", TAB, self.theory);
 
@@ -93,5 +89,63 @@ impl SQuestion {
 
 		println!("{}state after step:", TAB);
 		println!("{}{}`{}`", TAB, TAB, step.state_after);
+	}
+}
+
+// markdown printing
+impl SQuestion {
+	fn print_markdown(&self) {
+		println!("### question: ?{}", self.name);
+		println!("&emsp;theory: `{}` \\", self.theory);
+		println!("&emsp;approach: \\");
+
+		for (i, s) in self.steps.iter().enumerate() {
+			println!("&emsp;&emsp;{}: {} \\", i + 1, s.description);
+			println!("&emsp;&emsp;&emsp;`{}` \\", s.process);
+		}
+		
+		println!("&emsp;&emsp;{} \\", self.conclusion);
+		println!("&emsp;answer: {} ({}) \\", self.answer, self.is_true);
+		println!("&emsp;steps tried: {}", self.steps_tried);
+	}
+
+	fn print_at_markdown(&self, step: usize) {
+		println!("### question: ?{} (step {})", self.name, step);
+		println!("&emsp;theory: `{}` \\", self.theory);
+
+		let step = &self.steps[step - 1];
+
+		println!("&emsp;state before step: \\");
+		println!("&emsp;&emsp;`{}` \\", step.state_before);
+
+		println!("&emsp;step: {} \\", step.description);
+		println!("&emsp;&emsp;{} \\", step.process);
+
+		println!("&emsp;state after step: \\");
+		println!("&emsp;&emsp;`{}`", step.state_after);
+	}
+}
+
+// printing
+impl SQuestion {
+	pub fn print(&self) {
+		if get_cli_arg!(markdown) {
+			self.print_markdown();
+		} else {
+			self.print_normal();
+		}
+	}
+
+	pub fn print_at(&self, step: usize) {
+		if step < 1 || step > self.steps.len() {
+			new_formatted_error!(InvalidStepNumber step, self.steps.len()).dispatch();
+			crate::exit(1);
+		}
+
+		if get_cli_arg!(markdown) {
+			self.print_at_markdown(step);
+		} else {
+			self.print_at_normal(step);
+		}
 	}
 }

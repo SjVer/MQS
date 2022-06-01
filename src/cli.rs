@@ -35,6 +35,9 @@ pub struct CliArgs {
     #[clap(short, long, help = cli::ARG_MUTE)]
     pub mute: bool,
 
+    #[clap(long, help = cli::ARG_MARKDOWN)]
+    pub markdown: bool,
+
     #[clap(short, long, help = cli::ARG_COMPACT)]
     pub compact: bool,
 
