@@ -45,13 +45,13 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 &emsp;&emsp;8: simplify \
 &emsp;&emsp;&emsp;$3^2 \longrightarrow 9$ \
 &emsp;&emsp;9: rewrite using `std::!move_sub` \
-&emsp;&emsp;&emsp;$.. - 9 = .. \longrightarrow .. = .. + 9$ \
+&emsp;&emsp;&emsp;$\space..\space - 9 = \space..\space \longrightarrow \space..\space = \space..\space + 9$ \
 &emsp;&emsp;10: simplify \
 &emsp;&emsp;&emsp;$0 + 9 \longrightarrow 9$ \
 &emsp;&emsp;11: rewrite using `std::!swap_add` \
-&emsp;&emsp;&emsp;$(.. - 4) + .. \longrightarrow .. + (.. - 4)$ \
+&emsp;&emsp;&emsp;$(\space..\space - 4) + \space..\space \longrightarrow \space..\space + (\space..\space - 4)$ \
 &emsp;&emsp;12: rewrite using std::!move_sub \
-&emsp;&emsp;&emsp;$.. - 4 = .. \longrightarrow .. = .. + 4$ \
+&emsp;&emsp;&emsp;$\space..\space - 4 = \space..\space \longrightarrow \space..\space = \space..\space + 4$ \
 &emsp;&emsp;13: simplify \
 &emsp;&emsp;&emsp;$9 + 4 \longrightarrow 13$ \
 &emsp;&emsp;both sides are equal! (using `std::!sides_equal`) \
