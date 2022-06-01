@@ -374,7 +374,7 @@ impl Parser {
 		let atom = self.atom()?;
 		let tok = self.peek();
 
-		if self.matches(&[Matches, NotMatches]) {
+		if self.matches(&[Implies, NotImplies]) {
 			let rhs = self.atom()?;
 			Ok(theory_node!(tok => Match @s lhs: b!(atom), rhs: b!(rhs) ))
 		}

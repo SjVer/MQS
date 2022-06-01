@@ -15,7 +15,7 @@ $old := x^1 + 4 x + y^2 + 6 y = 0
 $new := (x + 2)^2 + (y + 3)^2 = 13
 
 -- question to solve (?0)
-?:= old => new
+?:= old <=> new
 ```
 
 ### Example Markdown Output
@@ -23,7 +23,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 (output from mqs with `--markdown` option)
 
 **question to solve: *?0*** \
-&emsp;**theory:** $\operatorname{old} \implies \operatorname{new}$ \
+&emsp;**theory:** $\operatorname{old} \iff \operatorname{new}$ \
 &emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
 &emsp;**approach:** \
 &emsp;&emsp;1: substitute `$old` \
@@ -57,3 +57,16 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 &emsp;**steps tried:** 10023 \
  \
 $\frac{1}{1}$ answers are true
+
+### Example Markdown Output At Step
+
+**question to solve: *?double_is_even*** \
+&emsp;**theory:** $\operatorname{old} \iff \operatorname{new}$ \
+&emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
+&emsp;**step 9:** \
+&emsp;&emsp;state before step: \
+&emsp;&emsp;&emsp;$(x + 2)^2 - 4 + (y + 3)^2 - 9 = 0 \implies (x + 2)^2 + (y + 3)^2 = 13$ \
+&emsp;&emsp;step: rewrite using `std::!move_sub` \
+&emsp;&emsp;&emsp;$\space..\space - 9 = \space..\space \longrightarrow \space..\space = \space..\space + 9$ \
+&emsp;&emsp;state after step: \
+&emsp;&emsp;&emsp;$(x + 2)^2 - 4 + (y + 3)^2 = 0 + 9 \implies (x + 2)^2 + (y + 3)^2 = 13$

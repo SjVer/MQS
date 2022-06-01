@@ -8,7 +8,7 @@ $old := x^1 + 4 x + y^2 + 6 y = 0
 $new := (x + 2)^2 + (y + 3)^2 = 13
 
 -- question to solve (?0)
-?:= old <> new
+?:= old <=> new
 
 
 

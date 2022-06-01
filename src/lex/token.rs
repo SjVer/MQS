@@ -25,8 +25,8 @@ pub enum TokenKind {
 	Or,
 	XOr,
 	And,
-	Matches,
-	NotMatches,
+	Implies,
+	NotImplies,
 	DefEquals,
 	DefNotEquals,
 	RoughlyEquals,
@@ -70,62 +70,68 @@ macro_rules! __somekind {
 }
 
 impl TokenKind {
-	pub fn from_chars(c1: char, c2: char) -> Option<Self> {
-		match (c1, c2) {
+	pub fn from_chars(chars: &[char]) -> Option<Self> {
+		match chars.len() {
+			3 => match (chars[0], chars[1], chars[2]) {
 
-			(':', '=') => __somekind!(Define),
-			(':', ':') => __somekind!(Access),
-			
-			('!', '|') => __somekind!(XOr),
-			('=', '=') => __somekind!(Matches),
-			('<', '>') => __somekind!(NotEquals),
-			('<', '!') => __somekind!(DefEquals),
-			('!', '=') => __somekind!(DefNotEquals),
-			('>', '=') => __somekind!(GreaterEqual),
-			('<', '=') => __somekind!(LesserEqual),
-			('?', '?') => __somekind!(Exists),
-			
-			('/', '=') => __somekind!(NotEquals),
+				('<', '=', '>') => __somekind!(Implies),
+				('<', '!', '>') => __somekind!(NotImplies),
 
-			('.', '.') => __somekind!(Generic),
-			
-			_ => None
+				_ => None
+			}
+			2 => match (chars[0], chars[1]) {
+
+				(':', '=') => __somekind!(Define),
+				(':', ':') => __somekind!(Access),
+				
+				('=', '=') => __somekind!(DefEquals),
+				('!', '=') => __somekind!(DefNotEquals),
+				('~', '=') => __somekind!(RoughlyEquals),
+				('>', '=') => __somekind!(GreaterEqual),
+				('<', '=') => __somekind!(LesserEqual),
+				('?', '?') => __somekind!(Exists),
+				
+				('/', '=') => __somekind!(NotEquals),
+	
+				('.', '.') => __somekind!(Generic),
+				
+				_ => None
+			}
+			1 => match chars[0] {
+
+				'&' => __somekind!(Conclusion),
+				'@' => __somekind!(Function),
+				'$' => __somekind!(Variable),
+				'?' => __somekind!(Question),
+				'!' => __somekind!(Theorem),
+				'#' => __somekind!(Apply),
+	
+				'{' => __somekind!(LeftBrace),
+				'}' => __somekind!(RightBrace),
+				'(' => __somekind!(LeftParen),
+				')' => __somekind!(RightParen),
+				':' => __somekind!(Colon),
+				'.' => __somekind!(Dot),
+	
+				'|' => __somekind!(Or),
+				'~' => __somekind!(XOr),
+				'&' => __somekind!(And),
+				'>' => __somekind!(Greater),
+				'<' => __somekind!(Lesser),
+				'%' => __somekind!(Divisible),
+	
+				'=' => __somekind!(Equals),
+				'+' => __somekind!(Plus),
+				'-' => __somekind!(Minus),
+				'*' => __somekind!(Multiply),
+				'/' => __somekind!(Divide),
+				'^' => __somekind!(Power),
+	
+				_ => None
+			}
+			_ => unreachable!(),
 		}
-	}
-
-	pub fn from_char(c: char) -> Option<Self> {
-		match c {
-			
-			'&' => __somekind!(Conclusion),
-			'@' => __somekind!(Function),
-			'$' => __somekind!(Variable),
-			'?' => __somekind!(Question),
-			'!' => __somekind!(Theorem),
-			'#' => __somekind!(Apply),
-
-			'{' => __somekind!(LeftBrace),
-			'}' => __somekind!(RightBrace),
-			'(' => __somekind!(LeftParen),
-			')' => __somekind!(RightParen),
-			':' => __somekind!(Colon),
-			'.' => __somekind!(Dot),
-
-			'|' => __somekind!(Or),
-			'&' => __somekind!(And),
-			'~' => __somekind!(RoughlyEquals),
-			'>' => __somekind!(Greater),
-			'<' => __somekind!(Lesser),
-			'%' => __somekind!(Divisible),
-
-			'=' => __somekind!(Equals),
-			'+' => __somekind!(Plus),
-			'-' => __somekind!(Minus),
-			'*' => __somekind!(Multiply),
-			'/' => __somekind!(Divide),
-			'^' => __somekind!(Power),
-
-			_ => None
-		}
+		
 	}
 }
 

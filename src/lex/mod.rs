@@ -242,31 +242,19 @@ impl Lexer {
 		
 		let c = self.advance();
 		
-		/*
-		if c == '\n' {
-			let mut tok = self.make_token(Newline);
-			tok.span.length = 0;
+		if c.is_alphabetic() { return self.identifier(); }
+		if c.is_numeric() { return self.number(c); }
 
-			self.new_line();
-
-			while self.peek() == '\n' {
-				self.advance();
-				self.new_line();
-				self.skip_ignored();
-			}
-
-			return tok;
-		}
-		
-		else */ if c.is_alphabetic() { return self.identifier(); }
-		
-		else if c.is_numeric() { return self.number(c); }
-
-		else if let Some(kind) = TokenKind::from_chars(c, self.peek()) {
+		if let Some(kind) = TokenKind::from_chars(&[c, self.peek(), self.peek_at(1)]) {
+			self.advance();
 			self.advance();
 			return self.make_token(kind);
 		}
-		else if let Some(kind) = TokenKind::from_char(c) {
+		if let Some(kind) = TokenKind::from_chars(&[c, self.peek()]) {
+			self.advance();
+			return self.make_token(kind);
+		}
+		if let Some(kind) = TokenKind::from_chars(&[c]) {
 			return self.make_token(kind);
 		}
 		

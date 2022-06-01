@@ -44,8 +44,8 @@ impl TheoryVisitor<String> for TheoryPrinter {
 
 	fn visit_match(&mut self, node: &TheoryNode) -> String {
 		let this = match node.token.kind {
-			Matches => "<>",
-			NotMatches => "<!",
+			Implies => "<=>",
+			NotImplies => "<!>",
 			_ => unreachable!(),
 		};
 

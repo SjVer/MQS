@@ -172,15 +172,15 @@ contexts:
       scope: keyword.definition.rewrite.mqs
 
     # question
-    - match: <>
-      scope: support.function.match.mqs
-    - match: <!
-      scope: support.function.not-match.mqs
+    - match: <=>
+      scope: support.function.implies.mqs
+    - match: <!>
+      scope: support.function.not-implies.mqs
     - match: \%
       scope: support.function.divisible.mqs
     - match: \?\?
       scope: support.function.exists.mqs
-    - match: \=|/=
+    - match: \=|/=|~=
       scope: support.function.comparison.mqs
     - match: <=|>=|<>|<|>
       scope: support.function.relational.mqs

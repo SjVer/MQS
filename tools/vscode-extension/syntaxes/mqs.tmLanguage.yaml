@@ -182,15 +182,15 @@ repository:
       name: keyword.definition.rewrite.mqs
 
     # question
-    - match: <>
-      name: support.function.match.mqs
-    - match: <!
-      name: support.function.not-match.mqs
+    - match: <=>
+      name: support.function.implies.mqs
+    - match: <!>
+      name: support.function.not-implies.mqs
     - match: \%
       name: support.function.divisible.mqs
     - match: \?\?
       name: support.function.exists.mqs
-    - match: \=|/=
+    - match: \=|/=|~=
       name: keyword.operator.comparison.mqs
     - match: <=|>=|<>|<|>
 
