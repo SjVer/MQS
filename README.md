@@ -22,8 +22,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 
 **question to solve: *?0*** \
 &emsp;**theory:** $\operatorname{old} \implies \operatorname{new}$ \
-&emsp;**meaning:** \
-&emsp;&emsp;$\operatorname{old}$ implies $\operatorname{new}$ \
+&emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
 &emsp;**approach:** \
 &emsp;&emsp;1: substitute `$old` \
 &emsp;&emsp;&emsp;$\operatorname{old} \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
