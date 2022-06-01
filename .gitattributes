@@ -1,2 +1,3 @@
 tools/** linguist-vendored
+*mqs linguist-vendored
 *.mqs linguist-language=Lua
