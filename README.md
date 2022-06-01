@@ -23,13 +23,13 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 (output from mqs with `--markdown` option)
 
 **question to solve: *?0*** \
-&emsp;**theory:** $\operatorname{old} \iff \operatorname{new}$ \
-&emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
+&emsp;**theory:** $\text{old} \iff \text{new}$ \
+&emsp;**meaning:** $\text{old}$ implies $\text{new}$ \
 &emsp;**approach:** \
 &emsp;&emsp;1: substitute `$old` \
-&emsp;&emsp;&emsp;$\operatorname{old} \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
+&emsp;&emsp;&emsp;$\text{old} \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
 &emsp;&emsp;2: substitute `$new` \
-&emsp;&emsp;&emsp;$\operatorname{new} \longrightarrow (x + 2)^2 + (y + 3)^2 = 10$ \
+&emsp;&emsp;&emsp;$\text{new} \longrightarrow (x + 2)^2 + (y + 3)^2 = 10$ \
 &emsp;&emsp;3: rewrite using `!unfold` \
 &emsp;&emsp;&emsp;$x^2 + 4 x \longrightarrow (x + \frac{4}{2})^2 - (\frac{4}{2})^2$ \
 &emsp;&emsp;4: rewrite using `!unfold` \
@@ -63,8 +63,8 @@ $\frac{1}{1}$ answers are true
 (output from mqs with `--markdown` and `--at 0:9` options)
 
 **question to solve: *?0*** \
-&emsp;**theory:** $\operatorname{old} \iff \operatorname{new}$ \
-&emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
+&emsp;**theory:** $\operatorname{old::b} \iff \text{new}$ \
+&emsp;**meaning:** $\text{old}$ implies $\text{new}$ \
 &emsp;**step 9:** \
 &emsp;&emsp;state before step: \
 &emsp;&emsp;&emsp;$(x + 2)^2 - 4 + (y + 3)^2 - 9 = 0 \implies (x + 2)^2 + (y + 3)^2 = 13$ \
