@@ -1,8 +1,8 @@
 # MQS
 
-Math Question Solver
+Math Question Solver (work in progress)
 
-### Example input
+### Example Input
 
 ```lua
 #std -- import std
@@ -18,7 +18,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 ?:= old => new
 ```
 
-### Example markdown output
+### Example Markdown Output
 
 (output from mqs with `--markdown` option)
 
