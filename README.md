@@ -60,7 +60,9 @@ $\frac{1}{1}$ answers are true
 
 ### Example Markdown Output At Step
 
-**question to solve: *?double_is_even*** \
+(output from mqs with `--markdown` and `--at 0:9` options)
+
+**question to solve: *?0*** \
 &emsp;**theory:** $\operatorname{old} \iff \operatorname{new}$ \
 &emsp;**meaning:** $\operatorname{old}$ implies $\operatorname{new}$ \
 &emsp;**step 9:** \
