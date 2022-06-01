@@ -2,7 +2,7 @@
 
 Math Question Solver
 
-#### Example input
+### Example input
 
 ```lua
 #std -- import std
@@ -18,7 +18,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 ?:= old <> new
 ```
 
-#### Example output
+### Example output
 
 **question to solve: *?0*** \
 &emsp;**theory:** $\operatorname{old} <> \operatorname{new}$ \
