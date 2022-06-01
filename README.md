@@ -21,17 +21,17 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 #### Example output
 
 **question to solve: *?0*** \
-&emsp;**theory**: `old <> new` \
-&emsp;**meaning**: \
-&emsp;&emsp;$old$ \
+&emsp;**theory:** $\operatorname{old} <> \operatorname{new}$ \
+&emsp;**meaning:** \
+&emsp;&emsp;$\operatorname{old}$ \
 &emsp;&emsp;&emsp;and \
-&emsp;&emsp;$new$ \
+&emsp;&emsp;$\operatorname{new}$ \
 &emsp;&emsp;&emsp;can coexist \
-&emsp;**approach**: \
+&emsp;**approach:** \
 &emsp;&emsp;1: substitute `$old` \
-&emsp;&emsp;&emsp;$old \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
+&emsp;&emsp;&emsp;$\operatorname{old} \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
 &emsp;&emsp;2: substitute `$new` \
-&emsp;&emsp;&emsp;$new \longrightarrow (x + 2)^2 + (y + 3)^2 = 10$ \
+&emsp;&emsp;&emsp;$\operatorname{new} \longrightarrow (x + 2)^2 + (y + 3)^2 = 10$ \
 &emsp;&emsp;3: rewrite using `!unfold` \
 &emsp;&emsp;&emsp;$x^2 + 4 x \longrightarrow (x + \frac{4}{2})^2 - (\frac{4}{2})^2$ \
 &emsp;&emsp;4: rewrite using `!unfold` \
@@ -55,7 +55,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 &emsp;&emsp;13: simplify \
 &emsp;&emsp;&emsp;$9 + 4 \longrightarrow 13$ \
 &emsp;&emsp;both sides are equal! (using `std::!sides_equal`) \
-&emsp;**answer**: correct (true) \
-&emsp;**steps tried**: 10023 \
+&emsp;**answer:** correct (true) \
+&emsp;**steps tried:** 10023 \
  \
 $\frac{1}{1}$ answers are true
