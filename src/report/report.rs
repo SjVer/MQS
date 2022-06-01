@@ -114,6 +114,7 @@ pub struct Report {
 
 static mut HAS_DISPATCHED: bool = false;
 
+// constructors
 impl Report {
 	pub fn with_quote(mut self, span: Span, message: Option<impl ToString>) -> Self {
 		let color = self.color.clone();
@@ -139,8 +140,10 @@ impl Report {
 		self.notes.push(note.to_string());
 		self
 	}
+}
 
-
+// normal report
+impl Report {
 	fn generate_heading(&self) -> String {
 		// label
 		let mut text = self.color.paint(&self.label).bold().to_string();
@@ -207,6 +210,83 @@ impl Report {
 
 		text
 	}
+}
+
+// dispatch
+impl Report {
+	fn dispatch_lint(&self) {
+		// dont output useless errors
+		if let Some(code) = &self.code {
+			if !code.is_useful() && self.quote.is_none() { return; }
+		}
+
+		// location and length (default values)
+		let mut location = JsonValue::Boolean(false);
+		let mut length = JsonValue::Number(0_i8.into());
+		
+		// set actual location and length if applicable 
+		if let Some(s) = &self.quote {
+			location = JsonValue::String(s.span.start.to_string());
+			length = JsonValue::Number(s.span.length.into());
+		}
+
+		// related quotes
+		let mut related = json::array![];
+		for s in &self.sub_quotes {
+			related.push(object!{
+				"message" => s.message.clone().unwrap_or_default().as_str(),
+				"location" => JsonValue::String(s.span.start.to_string()),
+				"length" => JsonValue::Number(s.span.length.into()),
+			}).unwrap();
+		}
+
+		// notes
+		let mut notes = json::array![];
+		for n in &self.notes { notes.push(n.to_string()).unwrap(); }
+
+		// code if given
+		let code = if let Some(code) = &self.code {
+			if code.is_useful() {
+				JsonValue::String(code.to_string())
+			} else {
+				JsonValue::Boolean(false)
+			}
+		} else {
+			JsonValue::Boolean(false)
+		};
+
+		// create the json object
+		super::lint::append(object!{
+			"message" => self.message.as_str(),
+			"location" => location,
+			"length" => length,
+			"severity" => self.severity.to_string(),
+			"code" => code,
+			"related" => related,
+			"notes" => notes,
+		});
+	}
+
+	fn dispatch_normal(&self) {
+		let mut text = String::new();
+
+		// label
+		text.push_str(&self.generate_heading());
+
+		// quotes
+		if !get_cli_arg!(compact) {
+			text.push_str(&self.generate_quote());
+			text.push_str(&self.generate_sub_quotes());
+			text.push_str(&self.generate_notes());
+
+			unsafe{
+				if HAS_DISPATCHED { text.insert(0, '\n'); }
+				else { HAS_DISPATCHED = true; }
+			}
+		}
+		
+		write!(stderr(), "{}", text).unwrap();
+	}
 
 	pub fn dispatch(&self) {
 		if let Some(code) = &self.code {
@@ -214,77 +294,11 @@ impl Report {
 		}
 
 		if lint_mode_is!(Diag) {
-			// output as json object
-
-			// dont output useless errors
-			if let Some(code) = &self.code {
-				if !code.is_useful() && self.quote.is_none() { return; }
-			}
-
-			// location and length (default values)
-			let mut location = JsonValue::Boolean(false);
-			let mut length = JsonValue::Number(0_i8.into());
-			
-			// set actual location and length if applicable 
-			if let Some(s) = &self.quote {
-				location = JsonValue::String(s.span.start.to_string());
-				length = JsonValue::Number(s.span.length.into());
-			}
-
-			// related quotes
-			let mut related = json::array![];
-			for s in &self.sub_quotes {
-				related.push(object!{
-					"message" => s.message.clone().unwrap_or_default().as_str(),
-					"location" => JsonValue::String(s.span.start.to_string()),
-					"length" => JsonValue::Number(s.span.length.into()),
-				}).unwrap();
-			}
-
-			// notes
-			let mut notes = json::array![];
-			for n in &self.notes { notes.push(n.to_string()).unwrap(); }
-
-			// code if given
-			let code = if let Some(code) = &self.code {
-				if code.is_useful() {
-					JsonValue::String(code.to_string())
-				} else {
-					JsonValue::Boolean(false)
-				}
-			} else {
-				JsonValue::Boolean(false)
-			};
-
-			// create the json object
-			super::lint::append(object!{
-				"message" => self.message.as_str(),
-				"location" => location,
-				"length" => length,
-				"severity" => self.severity.to_string(),
-				"code" => code,
-				"related" => related,
-				"notes" => notes,
-			});
+			self.dispatch_lint();
+		} else if get_cli_arg!(markdown) {
+			self.dispatch_markdown();
 		} else {
-			let mut text = String::new();
-	
-			// label
-			text.push_str(&self.generate_heading());
-	
-			// quotes
-			if !get_cli_arg!(compact) {
-				text.push_str(&self.generate_quote());
-				text.push_str(&self.generate_sub_quotes());
-				text.push_str(&self.generate_notes());
-
-				unsafe{
-					if HAS_DISPATCHED { text.insert(0, '\n'); }
-					else { HAS_DISPATCHED = true; }
-				}
-			}
-			
-			write!(stderr(), "{}", text).unwrap();
+			self.dispatch_normal();
 		}
 	}
 }

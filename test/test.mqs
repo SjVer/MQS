@@ -6,4 +6,3 @@ sect {
 }
 
 ?test := 1 + sect::y * x ??
-

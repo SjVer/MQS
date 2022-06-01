@@ -12,7 +12,7 @@ $new := (x + 2)^2 + (y + 3)^2 = 13
 
 
 
---* OUTPUT:
+--- OUTPUT:
 question to solve: ?0
 	theory: `old <> new`
 	meaning:
@@ -52,4 +52,4 @@ question to solve: ?0
 	steps tried: 10023
 	
 1/1 answers are true
-*--
+---

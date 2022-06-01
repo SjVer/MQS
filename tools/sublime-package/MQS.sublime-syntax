@@ -11,10 +11,10 @@ variables:
   ident: '[A-Za-z_][A-Za-z_0-9]*''*'
 
   # numbers
-  decimal: '\b[0-9_]+(?:\.[0-9_]*)?\b'
-  binary: '\b0(?:b|B)(?:[0-1_]|(\S))+\b'
-  octal: '\b0(?:c|C)(?:[0-7_]|(\S))+\b'
-  hexadecimal: '\b0(?:x|X)(?:[0-9a-fA-F_]|(\S))+\b'
+  decimal: '\b[0-9_]+(?:\.[0-9_]*)?'
+  binary: '\b0(?:b|B)(?:[0-1_]|(\S))+'
+  octal: '\b0(?:c|C)(?:[0-7_]|(\S))+'
+  hexadecimal: '\b0(?:x|X)(?:[0-9a-fA-F_]|(\S))+'
   number: '{{decimal}}|{{binary}}|{{octal}}|{{hexadecimal}}'
 
   type: nat|int|flt
@@ -143,7 +143,7 @@ contexts:
       - include: invalid
 
   question-decl:
-    - match: (\?)\s*(?:({{ident}})\s*)?
+    - match: (\?)(?!\?)\s*(?:({{ident}})\s*)?
       captures:
         1: keyword.declaration.question.mqs
         2: entity.name.function.question.mqs
@@ -178,12 +178,14 @@ contexts:
       scope: support.function.not-match.mqs
     - match: \%
       scope: support.function.divisible.mqs
+    - match: \?\?
+      scope: support.function.exists.mqs
+    - match: \=|/=
+      scope: support.function.comparison.mqs
+    - match: <=|>=|<>|<|>
+      scope: support.function.relational.mqs
 
     # normal
-    - match: \=|/=
-      scope: keyword.operator.comparison.mqs
-    - match: <=|>=|<>|<|>
-      scope: keyword.operator.relational.mqs
     - match: \*|/|-|\+|\^
       scope: keyword.operator.arithmetic.mqs
     - match: \(
@@ -196,10 +198,12 @@ contexts:
         - include: invalid
 
   variable:
-    - match: ({{ident}})\s*(\()
+    - match: (?:({{ident}})\s*(::)\s*)({{ident}})\s*(\()
       captures:
-        1: entity.name.function.mqs
-        2: punctuation.parentheses.arguments.start.mqs
+        1: entity.name.namespace.mqs
+        2: keyword.operator.namespace.mqs
+        3: entity.name.function.mqs
+        4: punctuation.parentheses.arguments.start.mqs
       push:
         - include: comment
         - match: '\)'
@@ -210,11 +214,14 @@ contexts:
         - include: expression
         - include: invalid
 
-    - match: '{{ident}}'
-      scope: variable.mqs
+    - match: (?:({{ident}})\s*(::)\s*)*({{ident}})
+      captures:
+        1: entity.name.namespace.mqs
+        2: keyword.operator.namespace.mqs
+        3: variable.mqs
 
   number:
-    - match: \b{{number}}\b
+    - match: \b{{number}}
       captures:
         0: constant.numeric.mqs
         1: invalid.illegal.mqs
@@ -226,12 +233,12 @@ contexts:
   # MISC
 
   comment:
-    - match: '--\*'
+    - match: '---'
       scope: punctuation.definition.comment.mqs
       push:
         - meta_include_prototype: false
         - meta_scope: comment.block.mqs
-        - match: '\*--'
+        - match: '---'
           pop: true
 
     - match: '--'

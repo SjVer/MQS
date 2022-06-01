@@ -178,6 +178,8 @@ repository:
     # misc
     - match: :=
       name: keyword.definition.mqs
+    - match: ->
+      name: keyword.definition.rewrite.mqs
 
     # question
     - match: <>
@@ -226,7 +228,7 @@ repository:
       endCaptures:
         '0': { name: punctuation.parentheses.arguments.start.mqs }
 
-    - match: '(?:({{ident}})\s*(::)\s*)*({{ident}})'
+    - match: (?:({{ident}})\s*(::)\s*)*({{ident}})
       captures: 
         '1': { name: entity.name.namespace.mqs }
         '2': { name: keyword.operator.namespace.mqs }
@@ -245,8 +247,8 @@ repository:
   comment:
     patterns:
     - name: comment.block.mqs
-      begin: '--\*'
-      end: '\*--'
+      begin: '---'
+      end: '---'
 
     - name: comment.line.mqs
       match: '--.*$'

@@ -12,3 +12,10 @@ num_enum = "0.5.7"
 convert_case = "0.5.0"
 eio = "0.1.2"
 regex = "1.5.5"
+
+[alias]
+b = "build"
+br = "build --release"
+r = "run"
+rr = "run --release"
+rq = "run --quiet"

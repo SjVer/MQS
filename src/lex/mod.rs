@@ -184,12 +184,12 @@ impl Lexer {
 						self.advance(); // skip first '-'
 						self.advance(); // skip second '-'
 						
-						if self.peek() == '*' {
+						if self.peek() == '-' {
 							// block
-							self.advance(); // skip '*'
+							self.advance(); // skip third '-'
 
 							loop {
-								if self.peek() == '*'
+								if self.peek() == '-'
 								&& self.peek_at(1) == '-'
 								&& self.peek_at(2) == '-' {
 									self.advance();
