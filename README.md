@@ -63,7 +63,7 @@ $\frac{1}{1}$ answers are true
 (output from mqs with `--markdown` and `--at 0:9` options)
 
 **question to solve: *?0*** \
-&emsp;**theory:** $\text{old::b} \iff \text{new}$ \
+&emsp;**theory:** $\text{old} \iff \text{new}$ \
 &emsp;**meaning:** $\text{old}$ implies $\text{new}$ \
 &emsp;**step 9:** \
 &emsp;&emsp;state before step: \
