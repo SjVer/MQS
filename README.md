@@ -15,18 +15,15 @@ $old := x^1 + 4 x + y^2 + 6 y = 0
 $new := (x + 2)^2 + (y + 3)^2 = 13
 
 -- question to solve (?0)
-?:= old <> new
+?:= old => new
 ```
 
 ### Example output
 
 **question to solve: *?0*** \
-&emsp;**theory:** $\operatorname{old} <> \operatorname{new}$ \
+&emsp;**theory:** $\operatorname{old} \implies \operatorname{new}$ \
 &emsp;**meaning:** \
-&emsp;&emsp;$\operatorname{old}$ \
-&emsp;&emsp;&emsp;and \
-&emsp;&emsp;$\operatorname{new}$ \
-&emsp;&emsp;&emsp;can coexist \
+&emsp;&emsp;$\operatorname{old}$ implies $\operatorname{new}$ \
 &emsp;**approach:** \
 &emsp;&emsp;1: substitute `$old` \
 &emsp;&emsp;&emsp;$\operatorname{old} \longrightarrow x^2 + 4 x + y^2 + 6 y = 0$ \
