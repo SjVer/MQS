@@ -27,6 +27,7 @@ pub struct Parser {
 
 	next_token: usize,
 	tokens: Vec<Token>,
+	records: Vec<usize>,
 }
 
 macro_rules! b {
@@ -105,22 +106,6 @@ impl Parser {
         }
     }
 
-	/*
-	fn consume_newline(&mut self, after: impl ToString) -> PResult<()> {
-		self.skip_newlines = false;
-		let consumed = self.consume(Newline, "newline");
-		self.skip_newlines = true;
-
-		if let Err(mut report) = consumed {
-			report.message += &format!(" after {}", after.to_string());
-			self.skip_newlines = true;
-			return Err(report);
-		}
-
-		Ok(())
-	}
-	*/
-
     fn check(&mut self, kind: TokenKind) -> bool {
         if self.is_at_end() {
             false
@@ -165,6 +150,18 @@ impl Parser {
     	//
 		self.tokens[self.next_token - 1].clone()
     }
+
+	fn record_position(&mut self) {
+		self.records.push(self.next_token);
+	}
+
+	fn pop_position(&mut self) {
+		self.records.pop();
+	}
+
+	fn traceback(&mut self) {
+		self.next_token = self.records.pop().unwrap();
+	}
 
     fn synchronize(&mut self) {
     	// if !top_level { 
@@ -399,12 +396,49 @@ impl Parser {
 		let token = self.peek();
 
 		if self.matches(&[LeftParen]) {
-			let th = self.theory()?;
+			// this is either a theory or an expression but we don't know yet
+			self.record_position();
+			let th = self.theory();
 			self.consume(TokenKind::RightParen, ")")?;
-			Ok(theory_node!(token => Grouping @t b!(th)))
+			
+			if let Ok(th) = th {
+				// we got a proper theory, so return it.
+				self.pop_position();
+				Ok(theory_node!(token => Grouping @t b!(th)))
+			} else {
+				// we didn't get a theory, so it might be
+				// an expression, or an error
+				self.traceback();
+				let expr = self.expression();
+				self.consume(TokenKind::RightParen, ")")?;
+
+				match expr {
+					Ok(mut expr) => {
+						// wrap the expr in a grouping to keep its parens
+						expr = expr_node!(expr.token.clone() => Grouping @t b!(expr));
+						Ok(theory_node!(token => Expression @t expr))
+					},
+					Err(_) => Err(
+						new_formatted_error!(ExpectedTheoryOrExpression)
+							.with_quote(self.peek().span, None::<String>)
+					)
+				}
+			}
 		} else {
 			let expr = self.expression()?;
-			Ok(theory_node!(token => Expression @t expr))
+			match &expr.item {
+				// just leave it be
+				ExprItem::Unary{..} | 
+				ExprItem::Grouping{..} | 
+				ExprItem::Variable{..} | 
+				ExprItem::Literal{..} => Ok(theory_node!(token => Expression @t expr)),
+				
+				// wrap the expr in a grouping
+				_ => {
+					let group = expr_node!(expr.token.clone() => Grouping @t b!(expr));
+					Ok(theory_node!(group.token.clone() => Expression @t group))
+				}
+			}
 		}
 	}
 }
@@ -578,6 +612,7 @@ impl Parser {
 
 			next_token: 0,
 			tokens: vec![],
+			records: vec![]
 		}
 	}
 

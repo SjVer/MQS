@@ -1,4 +1,10 @@
+---
+some temp. variable declarations
+because question parameters aren't
+implemented yet
+---
 $x := 1
 $y := 1
 
-?test := x + 3 = y <=> x - y = -3
+-- some question
+?test := ~ y = x / 4 <!> x = 4 * y

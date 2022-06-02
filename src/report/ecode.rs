@@ -28,6 +28,7 @@ pub enum ErrorCode {
 	ExpectedDeclaration,
 	ExpectedTheory,
 	ExpectedExpression,
+	ExpectedTheoryOrExpression,
 	AlreadyDefined,
 	UseOfUndefined,
 	DuplicateParameter,
@@ -99,6 +100,7 @@ macro_rules! fmt_error_msg {
 	(ExpectedDeclaration) => ("expected a declaration");
 	(ExpectedTheory) => ("expected a theory");
 	(ExpectedExpression) => ("expected an expression");
+	(ExpectedTheoryOrExpression) => ("expected a theory or expression");
 	(AlreadyDefined $type:tt $name:expr) => (format!("{} `{}` already defined", $type, $name));
 	(UseOfUndefined $type:tt $name:expr) => (format!("use of undefined {} `{}`", $type, $name));
 	(UseOfUndefined $type:tt $name:expr, $section:expr) => (format!("use of undefined {} `{}` in section `{}`", $type, $name, $section));

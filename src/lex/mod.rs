@@ -63,8 +63,11 @@ impl Lexer {
 	}
 
 	fn peek_at(&self, offset: usize) -> char {
-		//
-		deref_source!(self).at(self.current_offset + offset)
+		if deref_source!(self).buff.len() <= self.current_offset + offset {
+			'\0'
+		} else {
+			deref_source!(self).at(self.current_offset + offset)
+		}
 	}
 
 	fn make_token(&self, kind: TokenKind) -> Token {
