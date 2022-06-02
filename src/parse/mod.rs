@@ -425,6 +425,8 @@ impl Parser {
 				}
 			}
 		} else {
+			// TODO: Change this?
+
 			let expr = self.expression()?;
 			match &expr.item {
 				// just leave it be
