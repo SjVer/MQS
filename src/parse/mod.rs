@@ -374,7 +374,7 @@ impl Parser {
 
 		if self.matches(&[Implies, NotImplies]) {
 			let rhs = self.atom()?;
-			Ok(theory_node!(tok => Match @s lhs: b!(atom), rhs: b!(rhs) ))
+			Ok(theory_node!(tok => Implies @s lhs: b!(atom), rhs: b!(rhs) ))
 		}
 		else if self.matches(&[DefEquals, DefNotEquals, RoughlyEquals, Greater, GreaterEqual, Lesser, LesserEqual]) {
 			let rhs = self.atom()?;

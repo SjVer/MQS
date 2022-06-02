@@ -95,7 +95,7 @@ impl SQuestion {
 // markdown printing
 impl SQuestion {
 	fn print_markdown(&self) {
-		println!("**question to solve: *?{}***", self.name);
+		println!("**question to solve: *?{}*** \\", self.name);
 		println!("&emsp;**theory:** ${}$ \\", self.theory);
 		// TODO: meaning
 		println!("&emsp;**approach:** \\");
@@ -111,7 +111,7 @@ impl SQuestion {
 	}
 
 	fn print_at_markdown(&self, step: usize) {
-		println!("**question to solve: *?{}*** (step {})", self.name, step);
+		println!("**question to solve: *?{}*** (step {}) \\", self.name, step);
 		println!("&emsp;**theory:** ${}$ \\", self.theory);
 		println!("&emsp;**step {}:** \\", step);
 
