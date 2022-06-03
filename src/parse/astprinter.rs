@@ -35,7 +35,8 @@ impl TheoryVisitor<String> for TheoryPrinter {
 	fn visit_implies(&mut self, node: &TheoryNode, lhs: &TheoryNode, rhs: &TheoryNode) -> String {
 		let this = match node.token.kind {
 			Implies => normal_or_md!("<=>", "\\iff"),
-			NotImplies => normal_or_md!("<!>", "\\;\\;\\;\\not\\!\\!\\!\\!\\!\\iff"),
+			// NotImplies => normal_or_md!("<!>", "\\;\\;\\;\\not\\!\\!\\!\\!\\!\\iff"),
+			NotImplies => normal_or_md!("<!>", "\\centernot\\iff"),
 			_ => unreachable!(),
 		};
 
