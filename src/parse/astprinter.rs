@@ -160,7 +160,7 @@ impl ExprVisitor<String> for ExprPrinter {
 
 	fn visit_variable(&mut self, _node: &ExprNode, path: &String, _expr: &ExprNode) -> String {
 		//
-		path.to_string()
+		normal_or_md!(path.to_string(), format!("\\text{{{}}}", path))
 	}
 }
 
